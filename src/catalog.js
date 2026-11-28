@@ -227,6 +227,9 @@ var HERO_PHOTO = {
   jpg: "./assets/6LDHZZDF.jpg"
 };
 
+// The real 100 ml bottle, cut out (from private/photos/KEMET-100mL-4K-transparent.png, 256 px tall).
+var SIZE_BOTTLE = { webp: "./assets/img/bottle-100.webp", png: "./assets/img/bottle-100.png", ratio: 181 / 256 };
+
 var perfume = function (id, section, name, desc) {
   return { id: id, section: section, name: name, desc: desc || GENERIC_DESC, sized: true, art: { kind: "perfume" }, photo: PERFUME_PHOTOS[id] };
 };

@@ -309,10 +309,6 @@ function productHash(id) {
 
 var ROUTE_EVENT = "kemet:route";
 var navState = { push: false };
-// True once the app has rendered its first page. The homepage uses it to play the
-// bottle-fill motion only when you come back to it, never on top of the
-// first-paint copy that was already showing full bottles.
-var appMounted = false;
 
 function subscribeRoute(cb) {
   window.addEventListener("hashchange", cb);

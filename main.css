@@ -575,18 +575,13 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
   content: ""; position: absolute; bottom: -2px; left: 50%; width: 46px; height: 6px; transform: translateX(-50%);
   background: radial-gradient(closest-side, rgba(35, 28, 20, 0.32), transparent); z-index: -1;
 }
-.size-bottle { position: relative; filter: drop-shadow(-2px 3px 3px rgba(35, 28, 20, 0.12)); }
+.size-bottle { position: relative; display: block; filter: drop-shadow(-2px 3px 3px rgba(35, 28, 20, 0.18)); }
 @media (prefers-reduced-motion: no-preference) {
   @media (hover: hover) {
     .size-bottle { transition: transform 0.35s ease; }
     .size-shelf-item:hover .size-bottle { transform: translateY(-5px) rotate(-2deg); }
   }
-  /* The juice rises when you come back to the homepage (see SizeShelf). */
-  .size-shelf.fill .size-juice { transform-box: fill-box; transform-origin: 50% 100%; animation: juice-fill 1.1s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
-  .size-shelf.fill .size-shelf-item:nth-child(2) .size-juice { animation-delay: 0.12s; }
-  .size-shelf.fill .size-shelf-item:nth-child(3) .size-juice { animation-delay: 0.24s; }
 }
-@keyframes juice-fill { from { transform: scaleY(0.04); } }
 .size-shelf-ml { font-family: var(--font-display); font-size: var(--step-1); font-weight: 600; line-height: 1.2; }
 .size-shelf-price { font-size: var(--step--1); color: var(--ink-2); font-weight: 600; }
 .size-shelf-tag {

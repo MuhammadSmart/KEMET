@@ -26,12 +26,11 @@ function groupPriceLine(items) {
 function SizeShelf() {
   var perMl = function (s) { return priceRange(s.key, 1).hi / s.ml; };
   var best = PERFUME_SIZES.reduce(function (a, b) { return perMl(b) < perMl(a) ? b : a; }).key;
-  var fill = useRef(appMounted).current;
-  return h("div", { className: "size-shelf" + (fill ? " fill" : "") },
+  return h("div", { className: "size-shelf" },
     h("p", { className: "size-shelf-title", id: "size-shelf-title" }, "كل عطر بـ٣ أحجام"),
     h("ul", { className: "size-shelf-list", role: "list", "aria-labelledby": "size-shelf-title" }, PERFUME_SIZES.map(function (s) {
       return h("li", { key: s.key, className: "size-shelf-item" + (s.key === best ? " is-best" : "") },
-        h("span", { className: "size-shelf-slot" }, h(SizeBottle, { id: "sb-" + s.key, height: Math.round(84 * Math.cbrt(s.ml / 100)) })),
+        h("span", { className: "size-shelf-slot" }, h(SizeBottle, { height: Math.round(84 * Math.cbrt(s.ml / 100)) })),
         h("b", { className: "size-shelf-ml" }, s.label),
         h("span", { className: "size-shelf-price" }, priceLabel(s.key)),
         s.key === best && h("span", { className: "size-shelf-tag", title: perMlLabel(s.key) }, "الأوفر"));

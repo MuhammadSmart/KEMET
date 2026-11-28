@@ -22,7 +22,6 @@ function useBasket() {
   // Counter so the same message (adding the same item twice) is announced again.
   var setNotice = useCallback(function (text) { setNoticeState(function (o) { return { text: text, n: o.n + 1 }; }); }, []);
   useEffect(function () { saveBasket(basket); }, [basket]);
-  useEffect(function () { appMounted = true; }, []);
   // Keep several open tabs in sync.
   useEffect(function () {
     var onStorage = function (e) { if (e.key === BASKET_STORAGE_KEY) setBasket(loadBasket()); };
