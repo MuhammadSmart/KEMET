@@ -14638,7 +14638,7 @@ Error generating stack: ` + i.message + `
     // To turn it on: create a website in Umami, paste its Website ID below, then run
     // node scripts/build.mjs. Empty ID = off (no script is loaded, nothing is sent).
     var ANALYTICS = {
-      umamiWebsiteId: "c1ad891b-bbb7-4356-b987-1fd23a27d12d",
+      umamiWebsiteId: "4c20f53f-8f9d-4c04-9d7e-155e7615d18c",
       scriptSrc: "https://cloud.umami.is/script.js",
       // Only the published site is counted, not local previews.
       domains: "muhammadsmart.github.io"
