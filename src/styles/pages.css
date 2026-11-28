@@ -279,6 +279,32 @@
 .notes dt { font-weight: 700; display: grid; }
 .notes dt span { font-weight: 400; font-size: var(--step--1); color: var(--ink-2); }
 .notes dd { margin: 0; }
+/* Scent profile: accord bars, notes by stage, plain-language glossary. */
+.scent { display: grid; gap: var(--space-5); }
+.scent-block h3 { font-size: var(--step-1); margin-bottom: var(--space-3); }
+.accords { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; max-width: 32rem; }
+.accord {
+  justify-self: start; width: var(--w); min-height: 34px; display: grid; place-items: center;
+  padding-inline: var(--space-3); border-radius: 0 8px 8px 0; font-weight: 700; font-size: var(--step--1);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+}
+[dir="rtl"] .accord { border-radius: 8px 0 0 8px; }
+.accord-light { box-shadow: inset 0 0 0 1px rgba(35, 28, 20, 0.22), inset 0 -2px 0 rgba(0, 0, 0, 0.08); }
+@media (prefers-reduced-motion: no-preference) {
+  .accord { transition: width 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); }
+  .motion .accords:not(.is-in) .accord { width: 0; color: transparent; }
+  .accords .accord:nth-child(2) { transition-delay: 0.05s; } .accords .accord:nth-child(3) { transition-delay: 0.1s; }
+  .accords .accord:nth-child(4) { transition-delay: 0.15s; } .accords .accord:nth-child(n+5) { transition-delay: 0.2s; }
+}
+.note-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.note-chips li { padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: var(--step--1); }
+.note-glossary { margin-top: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.note-glossary summary { cursor: pointer; padding: var(--space-3) var(--space-4); font-weight: 700; color: var(--cobalt); min-height: 44px; display: flex; align-items: center; }
+.note-glossary dl { margin: 0; padding: 0 var(--space-4) var(--space-3); display: grid; gap: var(--space-2); }
+.note-glossary dl > div { display: grid; grid-template-columns: minmax(6rem, auto) 1fr; gap: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--line); }
+.note-glossary dt { font-weight: 700; }
+.note-glossary dd { margin: 0; color: var(--ink-2); font-size: var(--step--1); }
+.scent-ask { justify-self: start; }
 .notes-ask { display: grid; justify-items: start; gap: var(--space-3); padding: var(--space-5); border-radius: var(--radius); background: var(--alabaster-2); }
 .notes-ask p { max-width: 46ch; }
 @media (min-width: 900px) {

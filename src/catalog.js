@@ -6,11 +6,16 @@
 //   family:      one of SCENT_FAMILIES ids, e.g. "floral"  -> enables the scent filter
 //   character:   short phrase, e.g. "زهري ناعم بلمسة مسك"   -> shown on cards & product page
 //   notes:       { top: ["برغموت"], heart: ["ياسمين"], base: ["مسك"] }
+//   accords:     [["woody", 100], ["amber", 70]]  -> "الاتفاقات الرئيسية" bars (ids from ACCORDS, strength 0-100)
 //   unavailable: ["s100"]  -> that size shows as "غير متاح حاليًا"
 //   available:   false     -> whole product can't be added to the basket
 // Only add these from the real product sheet - the site never guesses them.
 
 var WA_NUMBER = "201154615084";
+
+// The published site's address. Used in the shop details for search engines;
+// if it changes (own domain), also update og:url and og:image in index.html.
+var SITE_URL = "https://muhammadsmart.github.io/kemet-perfumes/";
 
 // The shop's address (footer and the homepage contact card).
 var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
@@ -62,6 +67,130 @@ var SCENT_FAMILIES = [
   { id: "gourmand", title: "حلو" },
   { id: "musky", title: "مسكي" }
 ];
+
+// Main accords, drawn as coloured bars on the product page (like Fragrantica's
+// "الاتفاقات الرئيسية"). Colour = what the accord evokes; the label colour is
+// picked automatically for contrast.
+var ACCORDS = {
+  citrus: { title: "حمضي", color: "#f2d43d" },
+  fresh: { title: "منعش", color: "#9fd8ea" },
+  aquatic: { title: "مائي", color: "#3f9fd6" },
+  green: { title: "عشبي", color: "#2f7a3c" },
+  aromatic: { title: "أروماتك", color: "#3d8b79" },
+  fresh_spicy: { title: "تابلي منعش", color: "#86b34a" },
+  warm_spicy: { title: "توابل دافية", color: "#b5482a" },
+  floral: { title: "زهري", color: "#f48fb1" },
+  white_floral: { title: "زهور بيضا", color: "#f3ecdc" },
+  rose: { title: "وردي", color: "#d81b60" },
+  fruity: { title: "فاكهي", color: "#e8743b" },
+  sweet: { title: "حلو", color: "#e57ba0" },
+  vanilla: { title: "فانيليا", color: "#e9dbb0" },
+  powdery: { title: "بودري", color: "#e6d5e3" },
+  musky: { title: "مسكي", color: "#bdb4cc" },
+  amber: { title: "عنبري", color: "#c8741f" },
+  woody: { title: "خشبي", color: "#7a4e2d" },
+  oud: { title: "عود", color: "#4b2c1c" },
+  leather: { title: "جلدي", color: "#5b3a2e" },
+  tobacco: { title: "تبغ", color: "#8a5a2b" },
+  smoky: { title: "مدخّن", color: "#6b6b6b" },
+  balsamic: { title: "بلسمي", color: "#9a6a3a" },
+  coffee: { title: "قهوة", color: "#5a3a24" },
+  cacao: { title: "كاكاو", color: "#6b3e26" },
+  cinnamon: { title: "قرفة", color: "#a0522d" },
+  soft_spicy: { title: "توابل ناعمة", color: "#c98a5e" },
+  lavender: { title: "لافندر", color: "#9b80c8" },
+  iris: { title: "سوسن", color: "#b8a5d1" },
+  violet: { title: "بنفسج", color: "#8e6bbd" },
+  tuberose: { title: "تيوبروز", color: "#f5e3c3" },
+  patchouli: { title: "باتشولي", color: "#5d4a2f" },
+  earthy: { title: "ترابي", color: "#6b5a3e" },
+  salty: { title: "مالح", color: "#a9c9d6" },
+  animalic: { title: "حيواني", color: "#7d5a4f" },
+  metallic: { title: "معدني", color: "#9aa3ab" }
+};
+
+// Plain-language meaning of each note, shown under a product's notes so a
+// shopper can imagine the scent. Key = the note as written in "notes".
+var NOTE_GLOSSARY = {
+  "برغموت": "حمضيات منعشة زي قشر الليمون والبرتقال مع مرارة خفيفة",
+  "ليمون": "حامض ومنعش زي عصرة ليمون",
+  "ليم": "حامض ومنعش زي عصرة ليمون",
+  "برتقال": "ريحة قشر البرتقال، حلوة ومنعشة",
+  "يوسفي": "ريحة قشر اليوسفي، حلوة ومنعشة",
+  "جريب فروت": "حمضي فيه مرارة خفيفة",
+  "نيرولي": "زهر النارنج المقطّر، منعش ونضيف",
+  "بيتيجرين": "ورق وفروع النارنج، أخضر وحمضي",
+  "زهر البرتقال": "زهرة بيضا حلوة زي مية الزهر",
+  "كشمش أسود": "فاكهة توتية حامضة شوية",
+  "كمثرى": "فاكهة عصيرية حلوة",
+  "تفاح": "فاكهة منعشة",
+  "تفاح أخضر": "فاكهة منعشة فيها حموضة",
+  "أناناس": "فاكهة استوائية حلوة حامضة",
+  "خوخ": "فاكهة صيفي حلوة ناعمة",
+  "مشمش": "فاكهة صيفي حلوة ناعمة",
+  "شمام": "فاكهة مايّة منعشة",
+  "لافندر": "عشب بنفسجي نضيف زي ريحة الغسيل",
+  "نعناع": "منعش وبارد",
+  "مريمية": "عشب جاف دافي",
+  "روزماري": "عشب أخضر حاد",
+  "ريحان": "أخضر ومنعش زي ريحان البلكونة",
+  "حب العرعر": "ريحة صنوبرية منعشة",
+  "جيرانيوم": "ورق أخضر بريحة ورد خفيفة",
+  "فلفل": "حار ناشف",
+  "فلفل أسود": "حار ناشف",
+  "فلفل وردي": "حار خفيف وفيه لمحة فاكهة",
+  "زنجبيل": "حار منعش",
+  "قرفة": "حلوة دافية زي الحلويات",
+  "جوزة الطيب": "بهار دافي",
+  "زعفران": "دافي فيه إحساس جلدي ومعدني خفيف",
+  "ياسمين": "زهر أبيض حلو وقوي",
+  "فل": "زهر أبيض حلو وقوي",
+  "تيوبروز": "زهر أبيض كريمي تقيل (مسك الروم)",
+  "ورد": "ريحة الورد البلدي",
+  "سوسن": "بودري ناعم زي البودرة",
+  "زنبق الوادي": "زهر أخضر نضيف",
+  "فاوانيا": "ورد خفيف منعش",
+  "بنفسج": "زهر بودري",
+  "يلانج يلانج": "زهر استوائي حلو تقيل",
+  "نفحات بحرية": "ريحة بحر ونسيم",
+  "ملح": "إحساس جلد بعد البحر",
+  "أمبروكسان": "عنبري مسكي زي ريحة جلد نضيف، وفواح",
+  "قهوة": "ريحة البن المحمّص",
+  "كاكاو": "شوكولاتة",
+  "لوز": "ريحة المارزيبان",
+  "برالين": "سكر محمّص بالمكسرات",
+  "فانيليا": "حلوة دافية زي الكيك",
+  "تونكا": "فانيليا فيها لوز وتبن",
+  "بخور": "دخاني نضيف زي البخور",
+  "لبان": "دخاني نضيف زي البخور",
+  "عنبر": "دافي حلو بودري",
+  "عنبر رمادي": "مالح مسكي فيه دفء",
+  "لادن": "راتنج عنبري جلدي",
+  "مسك": "ريحة جلد نضيف وغسيل",
+  "مسك أبيض": "ريحة جلد نضيف وغسيل",
+  "باتشولي": "ترابي خشبي غامق",
+  "فيتيفر": "جذور ترابية مدخّنة",
+  "أرز": "خشب ناشف زي برادة القلم الرصاص",
+  "صندل": "خشب كريمي ناعم",
+  "خشب الكشمير": "خشب دافي ناعم مسكي",
+  "طحلب البلوط": "أخضر ترابي زي الغابة",
+  "جلد": "ريحة جلد الشنط والجزم الجديدة",
+  "بتولا": "خشب مدخّن جلدي",
+  "عود": "خشب شرقي تقيل ودخاني",
+  "هيل": "بهار منعش دافي زي القهوة بالحبهان",
+  "جاردينيا": "زهرة بيضا كريمية حلوة زي الفل",
+  "فراولة": "فاكهة حلوة زي مربى الفراولة",
+  "توت": "توت حلو حامض",
+  "داتورا": "زهرة بيضا بتفتح بالليل، كريمية وحلوة",
+  "طحلب": "أخضر ترابي زي الشجر بعد المطر",
+  "شاي الياسمين": "شاي أخضر بالياسمين، خفيف ونضيف",
+  "خشب الجواياك": "خشب دافي فيه لمسة دخان خفيفة",
+  "يانسون نجمي": "بهار حلو ريحته زي الينسون",
+  "زهر الزيتون": "زهرة بيضا خفيفة ريحتها نضيفة",
+  "تبغ": "ورق دخان ناشف، حلو ودافي",
+  "صوان": "إحساس حجر ناشف ومعدني زي الشرارة",
+  "بنزوين": "راتنج حلو فيه فانيليا"
+};
 
 // Placeholder for products without their own description. Product pages don't
 // show it (the "اسأل عن الريحة" box below covers that); kept for the data.
@@ -152,3 +281,24 @@ var products = [
 
 // Products shown on the homepage, in order.
 var FEATURED_IDS = ["w-hams", "w-nefertari", "kemet-edp", "m-malaki"];
+
+// Scent profiles: family, scent line, notes and main accords per perfume. Taken
+// from the public pyramid of the perfume each one resembles (the shop confirmed
+// the match) and reviewed by the shop before going live. Accord strengths are
+// approximate, strongest first. A perfume listed here gets its scent line on
+// cards, the scent-family filter, and the "الريحة" section on its page.
+var SCENT_PROFILES = {
+  "w-hams": {"family":"amber","character":"بهارات دافية وجاردينيا على صندل وعنبر، غامق وأنثوي","notes":{"top":["فلفل","هيل","زنجبيل"],"heart":["جاردينيا","زهر البرتقال","فاوانيا"],"base":["صندل","مسك","عنبر"]},"accords":[["warm_spicy",100],["woody",82],["fresh_spicy",68],["white_floral",56],["powdery",46],["musky",38]]},
+  "w-dalal": {"family":"floral","character":"فراولة وتوت على ياسمين وباتشولي، حلو ومنعش","notes":{"top":["فراولة","توت","كمثرى","برتقال","برغموت"],"heart":["فاوانيا","ياسمين","داتورا","زهر البرتقال"],"base":["باتشولي","مسك أبيض","فانيليا","أمبروكسان","أرز"]},"accords":[["fruity",100],["sweet",82],["fresh",68],["white_floral",56],["patchouli",46],["citrus",38]]},
+  "w-qamar": {"family":"amber","character":"ياسمين وفانيليا على خشب، دافي وناعم","notes":{"top":["كشمش أسود","فلفل وردي","برغموت"],"heart":["ياسمين","شاي الياسمين"],"base":["فانيليا","خشب الكشمير","خشب الجواياك"]},"accords":[["woody",100],["vanilla",82],["fruity",68],["white_floral",56],["soft_spicy",46],["powdery",38]]},
+  "m-anbar": {"family":"amber","character":"ليمون ويانسون على تونكا وجلد، دافي وأنيق","notes":{"top":["ليمون","برغموت"],"heart":["يانسون نجمي","زهر الزيتون","خشب الجواياك"],"base":["جلد","تونكا","تبغ"]},"accords":[["citrus",100],["leather",82],["soft_spicy",68],["floral",56],["tobacco",46],["sweet",38]]},
+  "kemet-edp": {"family":"woody","character":"برتقال وفلفل على خشب وفيتيفر، ترابي ورجولي","notes":{"top":["برتقال","جريب فروت"],"heart":["فلفل","جيرانيوم","صوان"],"base":["فيتيفر","أرز","باتشولي","بنزوين"]},"accords":[["citrus",100],["woody",82],["fresh_spicy",68],["aromatic",56],["earthy",46],["warm_spicy",38]]},
+  "w-nefertari": {"family":"floral","character":"زهور بيضا على لافندر وفانيليا، أنثوي وجريء","notes":{"top":["لافندر","يوسفي","كشمش أسود","بيتيجرين"],"heart":["لافندر","زهر البرتقال","ياسمين"],"base":["فانيليا","مسك","أرز","عنبر رمادي"]},"accords":[["white_floral",100],["citrus",82],["lavender",68],["vanilla",56],["aromatic",46],["sweet",38]]},
+  "w-lotus": {"family":"floral","character":"زهور بيضا ومسك أبيض، نضيف ومريح","notes":{"top":["زهر البرتقال","برغموت"],"heart":["تيوبروز","ياسمين"],"base":["فانيليا","مسك أبيض","أرز"]},"accords":[["white_floral",100],["tuberose",82],["citrus",68],["animalic",56],["vanilla",46]]},
+  "m-saqr": {"family":"fresh","character":"فريش حار، برغموت وفلفل على عنبر، شبابي وفواح","notes":{"top":["برغموت","فلفل"],"heart":["فلفل وردي","لافندر","فيتيفر","باتشولي","جيرانيوم"],"base":["أمبروكسان","أرز","لادن"]},"accords":[["fresh_spicy",100],["amber",82],["citrus",68],["aromatic",56],["musky",46],["woody",38]]},
+  "m-malaki": {"family":"amber","character":"حلو حار بالقرفة والجلد، للسهرة","notes":{"top":["يوسفي","جريب فروت","نعناع"],"heart":["قرفة","ورد"],"base":["عنبر","جلد","باتشولي"]},"accords":[["warm_spicy",100],["cinnamon",82],["citrus",68],["amber",56],["woody",46],["leather",38]]},
+  "m-fares": {"family":"woody","character":"أناناس مدخّن على خشب ومسك، فخم","notes":{"top":["كشمش أسود","برغموت","تفاح","أناناس"],"heart":["ورد","بتولا","ياسمين","باتشولي"],"base":["مسك","طحلب البلوط","عنبر رمادي","فانيليا"]},"accords":[["fruity",100],["sweet",82],["woody",68],["leather",56],["citrus",46],["smoky",38]]}
+};
+products.forEach(function (p) {
+  if (SCENT_PROFILES[p.id]) Object.assign(p, SCENT_PROFILES[p.id]);
+});

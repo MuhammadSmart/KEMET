@@ -14273,11 +14273,16 @@ Error generating stack: ` + i.message + `
     //   family:      one of SCENT_FAMILIES ids, e.g. "floral"  -> enables the scent filter
     //   character:   short phrase, e.g. "زهري ناعم بلمسة مسك"   -> shown on cards & product page
     //   notes:       { top: ["برغموت"], heart: ["ياسمين"], base: ["مسك"] }
+    //   accords:     [["woody", 100], ["amber", 70]]  -> "الاتفاقات الرئيسية" bars (ids from ACCORDS, strength 0-100)
     //   unavailable: ["s100"]  -> that size shows as "غير متاح حاليًا"
     //   available:   false     -> whole product can't be added to the basket
     // Only add these from the real product sheet - the site never guesses them.
     
     var WA_NUMBER = "201154615084";
+    
+    // The published site's address. Used in the shop details for search engines;
+    // if it changes (own domain), also update og:url and og:image in index.html.
+    var SITE_URL = "https://muhammadsmart.github.io/kemet-perfumes/";
     
     // The shop's address (footer and the homepage contact card).
     var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
@@ -14329,6 +14334,130 @@ Error generating stack: ` + i.message + `
       { id: "gourmand", title: "حلو" },
       { id: "musky", title: "مسكي" }
     ];
+    
+    // Main accords, drawn as coloured bars on the product page (like Fragrantica's
+    // "الاتفاقات الرئيسية"). Colour = what the accord evokes; the label colour is
+    // picked automatically for contrast.
+    var ACCORDS = {
+      citrus: { title: "حمضي", color: "#f2d43d" },
+      fresh: { title: "منعش", color: "#9fd8ea" },
+      aquatic: { title: "مائي", color: "#3f9fd6" },
+      green: { title: "عشبي", color: "#2f7a3c" },
+      aromatic: { title: "أروماتك", color: "#3d8b79" },
+      fresh_spicy: { title: "تابلي منعش", color: "#86b34a" },
+      warm_spicy: { title: "توابل دافية", color: "#b5482a" },
+      floral: { title: "زهري", color: "#f48fb1" },
+      white_floral: { title: "زهور بيضا", color: "#f3ecdc" },
+      rose: { title: "وردي", color: "#d81b60" },
+      fruity: { title: "فاكهي", color: "#e8743b" },
+      sweet: { title: "حلو", color: "#e57ba0" },
+      vanilla: { title: "فانيليا", color: "#e9dbb0" },
+      powdery: { title: "بودري", color: "#e6d5e3" },
+      musky: { title: "مسكي", color: "#bdb4cc" },
+      amber: { title: "عنبري", color: "#c8741f" },
+      woody: { title: "خشبي", color: "#7a4e2d" },
+      oud: { title: "عود", color: "#4b2c1c" },
+      leather: { title: "جلدي", color: "#5b3a2e" },
+      tobacco: { title: "تبغ", color: "#8a5a2b" },
+      smoky: { title: "مدخّن", color: "#6b6b6b" },
+      balsamic: { title: "بلسمي", color: "#9a6a3a" },
+      coffee: { title: "قهوة", color: "#5a3a24" },
+      cacao: { title: "كاكاو", color: "#6b3e26" },
+      cinnamon: { title: "قرفة", color: "#a0522d" },
+      soft_spicy: { title: "توابل ناعمة", color: "#c98a5e" },
+      lavender: { title: "لافندر", color: "#9b80c8" },
+      iris: { title: "سوسن", color: "#b8a5d1" },
+      violet: { title: "بنفسج", color: "#8e6bbd" },
+      tuberose: { title: "تيوبروز", color: "#f5e3c3" },
+      patchouli: { title: "باتشولي", color: "#5d4a2f" },
+      earthy: { title: "ترابي", color: "#6b5a3e" },
+      salty: { title: "مالح", color: "#a9c9d6" },
+      animalic: { title: "حيواني", color: "#7d5a4f" },
+      metallic: { title: "معدني", color: "#9aa3ab" }
+    };
+    
+    // Plain-language meaning of each note, shown under a product's notes so a
+    // shopper can imagine the scent. Key = the note as written in "notes".
+    var NOTE_GLOSSARY = {
+      "برغموت": "حمضيات منعشة زي قشر الليمون والبرتقال مع مرارة خفيفة",
+      "ليمون": "حامض ومنعش زي عصرة ليمون",
+      "ليم": "حامض ومنعش زي عصرة ليمون",
+      "برتقال": "ريحة قشر البرتقال، حلوة ومنعشة",
+      "يوسفي": "ريحة قشر اليوسفي، حلوة ومنعشة",
+      "جريب فروت": "حمضي فيه مرارة خفيفة",
+      "نيرولي": "زهر النارنج المقطّر، منعش ونضيف",
+      "بيتيجرين": "ورق وفروع النارنج، أخضر وحمضي",
+      "زهر البرتقال": "زهرة بيضا حلوة زي مية الزهر",
+      "كشمش أسود": "فاكهة توتية حامضة شوية",
+      "كمثرى": "فاكهة عصيرية حلوة",
+      "تفاح": "فاكهة منعشة",
+      "تفاح أخضر": "فاكهة منعشة فيها حموضة",
+      "أناناس": "فاكهة استوائية حلوة حامضة",
+      "خوخ": "فاكهة صيفي حلوة ناعمة",
+      "مشمش": "فاكهة صيفي حلوة ناعمة",
+      "شمام": "فاكهة مايّة منعشة",
+      "لافندر": "عشب بنفسجي نضيف زي ريحة الغسيل",
+      "نعناع": "منعش وبارد",
+      "مريمية": "عشب جاف دافي",
+      "روزماري": "عشب أخضر حاد",
+      "ريحان": "أخضر ومنعش زي ريحان البلكونة",
+      "حب العرعر": "ريحة صنوبرية منعشة",
+      "جيرانيوم": "ورق أخضر بريحة ورد خفيفة",
+      "فلفل": "حار ناشف",
+      "فلفل أسود": "حار ناشف",
+      "فلفل وردي": "حار خفيف وفيه لمحة فاكهة",
+      "زنجبيل": "حار منعش",
+      "قرفة": "حلوة دافية زي الحلويات",
+      "جوزة الطيب": "بهار دافي",
+      "زعفران": "دافي فيه إحساس جلدي ومعدني خفيف",
+      "ياسمين": "زهر أبيض حلو وقوي",
+      "فل": "زهر أبيض حلو وقوي",
+      "تيوبروز": "زهر أبيض كريمي تقيل (مسك الروم)",
+      "ورد": "ريحة الورد البلدي",
+      "سوسن": "بودري ناعم زي البودرة",
+      "زنبق الوادي": "زهر أخضر نضيف",
+      "فاوانيا": "ورد خفيف منعش",
+      "بنفسج": "زهر بودري",
+      "يلانج يلانج": "زهر استوائي حلو تقيل",
+      "نفحات بحرية": "ريحة بحر ونسيم",
+      "ملح": "إحساس جلد بعد البحر",
+      "أمبروكسان": "عنبري مسكي زي ريحة جلد نضيف، وفواح",
+      "قهوة": "ريحة البن المحمّص",
+      "كاكاو": "شوكولاتة",
+      "لوز": "ريحة المارزيبان",
+      "برالين": "سكر محمّص بالمكسرات",
+      "فانيليا": "حلوة دافية زي الكيك",
+      "تونكا": "فانيليا فيها لوز وتبن",
+      "بخور": "دخاني نضيف زي البخور",
+      "لبان": "دخاني نضيف زي البخور",
+      "عنبر": "دافي حلو بودري",
+      "عنبر رمادي": "مالح مسكي فيه دفء",
+      "لادن": "راتنج عنبري جلدي",
+      "مسك": "ريحة جلد نضيف وغسيل",
+      "مسك أبيض": "ريحة جلد نضيف وغسيل",
+      "باتشولي": "ترابي خشبي غامق",
+      "فيتيفر": "جذور ترابية مدخّنة",
+      "أرز": "خشب ناشف زي برادة القلم الرصاص",
+      "صندل": "خشب كريمي ناعم",
+      "خشب الكشمير": "خشب دافي ناعم مسكي",
+      "طحلب البلوط": "أخضر ترابي زي الغابة",
+      "جلد": "ريحة جلد الشنط والجزم الجديدة",
+      "بتولا": "خشب مدخّن جلدي",
+      "عود": "خشب شرقي تقيل ودخاني",
+      "هيل": "بهار منعش دافي زي القهوة بالحبهان",
+      "جاردينيا": "زهرة بيضا كريمية حلوة زي الفل",
+      "فراولة": "فاكهة حلوة زي مربى الفراولة",
+      "توت": "توت حلو حامض",
+      "داتورا": "زهرة بيضا بتفتح بالليل، كريمية وحلوة",
+      "طحلب": "أخضر ترابي زي الشجر بعد المطر",
+      "شاي الياسمين": "شاي أخضر بالياسمين، خفيف ونضيف",
+      "خشب الجواياك": "خشب دافي فيه لمسة دخان خفيفة",
+      "يانسون نجمي": "بهار حلو ريحته زي الينسون",
+      "زهر الزيتون": "زهرة بيضا خفيفة ريحتها نضيفة",
+      "تبغ": "ورق دخان ناشف، حلو ودافي",
+      "صوان": "إحساس حجر ناشف ومعدني زي الشرارة",
+      "بنزوين": "راتنج حلو فيه فانيليا"
+    };
     
     // Placeholder for products without their own description. Product pages don't
     // show it (the "اسأل عن الريحة" box below covers that); kept for the data.
@@ -14419,6 +14548,27 @@ Error generating stack: ` + i.message + `
     
     // Products shown on the homepage, in order.
     var FEATURED_IDS = ["w-hams", "w-nefertari", "kemet-edp", "m-malaki"];
+    
+    // Scent profiles: family, scent line, notes and main accords per perfume. Taken
+    // from the public pyramid of the perfume each one resembles (the shop confirmed
+    // the match) and reviewed by the shop before going live. Accord strengths are
+    // approximate, strongest first. A perfume listed here gets its scent line on
+    // cards, the scent-family filter, and the "الريحة" section on its page.
+    var SCENT_PROFILES = {
+      "w-hams": {"family":"amber","character":"بهارات دافية وجاردينيا على صندل وعنبر، غامق وأنثوي","notes":{"top":["فلفل","هيل","زنجبيل"],"heart":["جاردينيا","زهر البرتقال","فاوانيا"],"base":["صندل","مسك","عنبر"]},"accords":[["warm_spicy",100],["woody",82],["fresh_spicy",68],["white_floral",56],["powdery",46],["musky",38]]},
+      "w-dalal": {"family":"floral","character":"فراولة وتوت على ياسمين وباتشولي، حلو ومنعش","notes":{"top":["فراولة","توت","كمثرى","برتقال","برغموت"],"heart":["فاوانيا","ياسمين","داتورا","زهر البرتقال"],"base":["باتشولي","مسك أبيض","فانيليا","أمبروكسان","أرز"]},"accords":[["fruity",100],["sweet",82],["fresh",68],["white_floral",56],["patchouli",46],["citrus",38]]},
+      "w-qamar": {"family":"amber","character":"ياسمين وفانيليا على خشب، دافي وناعم","notes":{"top":["كشمش أسود","فلفل وردي","برغموت"],"heart":["ياسمين","شاي الياسمين"],"base":["فانيليا","خشب الكشمير","خشب الجواياك"]},"accords":[["woody",100],["vanilla",82],["fruity",68],["white_floral",56],["soft_spicy",46],["powdery",38]]},
+      "m-anbar": {"family":"amber","character":"ليمون ويانسون على تونكا وجلد، دافي وأنيق","notes":{"top":["ليمون","برغموت"],"heart":["يانسون نجمي","زهر الزيتون","خشب الجواياك"],"base":["جلد","تونكا","تبغ"]},"accords":[["citrus",100],["leather",82],["soft_spicy",68],["floral",56],["tobacco",46],["sweet",38]]},
+      "kemet-edp": {"family":"woody","character":"برتقال وفلفل على خشب وفيتيفر، ترابي ورجولي","notes":{"top":["برتقال","جريب فروت"],"heart":["فلفل","جيرانيوم","صوان"],"base":["فيتيفر","أرز","باتشولي","بنزوين"]},"accords":[["citrus",100],["woody",82],["fresh_spicy",68],["aromatic",56],["earthy",46],["warm_spicy",38]]},
+      "w-nefertari": {"family":"floral","character":"زهور بيضا على لافندر وفانيليا، أنثوي وجريء","notes":{"top":["لافندر","يوسفي","كشمش أسود","بيتيجرين"],"heart":["لافندر","زهر البرتقال","ياسمين"],"base":["فانيليا","مسك","أرز","عنبر رمادي"]},"accords":[["white_floral",100],["citrus",82],["lavender",68],["vanilla",56],["aromatic",46],["sweet",38]]},
+      "w-lotus": {"family":"floral","character":"زهور بيضا ومسك أبيض، نضيف ومريح","notes":{"top":["زهر البرتقال","برغموت"],"heart":["تيوبروز","ياسمين"],"base":["فانيليا","مسك أبيض","أرز"]},"accords":[["white_floral",100],["tuberose",82],["citrus",68],["animalic",56],["vanilla",46]]},
+      "m-saqr": {"family":"fresh","character":"فريش حار، برغموت وفلفل على عنبر، شبابي وفواح","notes":{"top":["برغموت","فلفل"],"heart":["فلفل وردي","لافندر","فيتيفر","باتشولي","جيرانيوم"],"base":["أمبروكسان","أرز","لادن"]},"accords":[["fresh_spicy",100],["amber",82],["citrus",68],["aromatic",56],["musky",46],["woody",38]]},
+      "m-malaki": {"family":"amber","character":"حلو حار بالقرفة والجلد، للسهرة","notes":{"top":["يوسفي","جريب فروت","نعناع"],"heart":["قرفة","ورد"],"base":["عنبر","جلد","باتشولي"]},"accords":[["warm_spicy",100],["cinnamon",82],["citrus",68],["amber",56],["woody",46],["leather",38]]},
+      "m-fares": {"family":"woody","character":"أناناس مدخّن على خشب ومسك، فخم","notes":{"top":["كشمش أسود","برغموت","تفاح","أناناس"],"heart":["ورد","بتولا","ياسمين","باتشولي"],"base":["مسك","طحلب البلوط","عنبر رمادي","فانيليا"]},"accords":[["fruity",100],["sweet",82],["woody",68],["leather",56],["citrus",46],["smoky",38]]}
+    };
+    products.forEach(function (p) {
+      if (SCENT_PROFILES[p.id]) Object.assign(p, SCENT_PROFILES[p.id]);
+    });
     
     // ===== src/lib.js =====
     // Pure helpers: numbers, prices, catalog lookups, WhatsApp messages, basket, routing.
@@ -14531,6 +14681,19 @@ Error generating stack: ` + i.message + `
     function unitName(p, key) {
       if (!p.sized) return p.name;
       return p.name + " " + sizeInfo(key).label;
+    }
+    function hasAccords(p) {
+      return !!(p.accords && p.accords.some(function (a) { return ACCORDS[a[0]]; }));
+    }
+    // Dark or light label for a bar colour, whichever reads better.
+    function labelColorFor(hex) {
+      var c = hex.replace("#", "");
+      var lin = [0, 2, 4].map(function (i) {
+        var v = parseInt(c.slice(i, i + 2), 16) / 255;
+        return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      var L = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+      return (L + 0.05) / 0.05 > 1.05 / (L + 0.05) ? "#231c14" : "#ffffff";
     }
     function hasNotes(p) {
       var n = p.notes;
@@ -15545,6 +15708,44 @@ Error generating stack: ` + i.message + `
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
     }
     
+    // ---------------- Scent profile (product page) ----------------
+    // Main accords as bars (longest = strongest), then the notes by stage, then what
+    // each note smells like in plain words, so a shopper can imagine the scent.
+    function ScentProfile(props) {
+      var p = props.product;
+      var accords = (p.accords || []).filter(function (a) { return ACCORDS[a[0]]; })
+        .slice().sort(function (a, b) { return b[1] - a[1]; });
+      var stages = [["top", "الافتتاحية", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]];
+      var all = hasNotes(p) ? [].concat(p.notes.top || [], p.notes.heart || [], p.notes.base || []) : [];
+      var explained = all.filter(function (n, i) { return NOTE_GLOSSARY[n] && all.indexOf(n) === i; });
+      return h("div", { className: "scent" },
+        accords.length > 0 && h("div", { className: "scent-block" },
+          h("h3", { id: "accords-title" }, "الاتفاقات الرئيسية"),
+          h("ul", { className: "accords", role: "list", "aria-labelledby": "accords-title" }, accords.map(function (a) {
+            var acc = ACCORDS[a[0]];
+            var w = Math.max(28, Math.min(100, a[1]));
+            var ink = labelColorFor(acc.color);
+            // Light bars (white flowers, vanilla) get a hairline so they don't melt into the page.
+            return h("li", { key: a[0], className: "accord" + (ink === "#ffffff" ? "" : " accord-light"), style: { "--w": w + "%", background: acc.color, color: ink } },
+              h("span", null, acc.title), h("span", { className: "sr-only" }, "، قوته " + toAr(Math.round(a[1])) + " من ١٠٠"));
+          }))),
+        hasNotes(p) && h("div", { className: "scent-block" },
+          h("h3", null, "التونات"),
+          h("dl", { className: "notes" }, stages.map(function (row) {
+            var list = p.notes[row[0]] || [];
+            if (!list.length) return null;
+            return h("div", { key: row[0], className: "notes-row" },
+              h("dt", null, row[1], h("span", null, row[2])),
+              h("dd", null, h("ul", { className: "note-chips", role: "list" }, list.map(function (n) { return h("li", { key: n }, n); }))));
+          })),
+          explained.length > 0 && h("details", { className: "note-glossary" },
+            h("summary", null, "يعني إيه التونات دي؟"),
+            h("dl", null, explained.map(function (n) {
+              return h("div", { key: n }, h("dt", null, n), h("dd", null, NOTE_GLOSSARY[n]));
+            })))),
+        h(WhatsAppLink, { message: scentQuestion(p), className: "btn btn-secondary scent-ask", event: { name: "whatsapp-question", data: { topic: "scent", product: p.id } } }, "عندك سؤال عن الريحة؟"));
+    }
+    
     // ---------------- Collection ----------------
     function CollectionPage(props) {
       var route = props.route;
@@ -15742,16 +15943,8 @@ Error generating stack: ` + i.message + `
     
           h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },
             h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),
-            hasNotes(p)
-              ? h("dl", { className: "notes" },
-                [["top", "النوتات العليا", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]].map(function (row) {
-                  var list = (p.notes[row[0]] || []);
-                  if (!list.length) return null;
-                  return h("div", { key: row[0], className: "notes-row" },
-                    h("dt", null, row[1], h("span", null, row[2])),
-                    h("dd", null, list.join("، ")));
-                }))
-              : h("div", { className: "notes-ask" },
+            (hasAccords(p) || hasNotes(p)) && h(ScentProfile, { product: p }),
+            !(hasAccords(p) || hasNotes(p)) && h("div", { className: "notes-ask" },
                 h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),
                 h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name, event: { name: "whatsapp-question", data: { topic: p.sized ? "scent" : "product", product: p.id } } }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
     
@@ -15886,7 +16079,7 @@ Error generating stack: ` + i.message + `
             if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
           });
         }, { rootMargin: "0px 0px -6% 0px", threshold: 0.12 });
-        document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in)").forEach(function (el) { io.observe(el); });
+        document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in), .accords:not(.is-in)").forEach(function (el) { io.observe(el); });
         return function () { io.disconnect(); };
       }, [route.hash]);
     

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- KEMET tab icon: a gold ankh on deep cobalt (simplified from the winged-ankh emblem so it reads at 16 px) -->
+  <rect width="32" height="32" rx="7" fill="#12275e"/>
+  <g fill="none" stroke="#e3c67a" stroke-width="2.6" stroke-linecap="round">
+    <ellipse cx="16" cy="9.6" rx="3.9" ry="4.9"/>
+    <path d="M8.6 16.2h14.8M16 14.6V27"/>
+  </g>
+</svg>

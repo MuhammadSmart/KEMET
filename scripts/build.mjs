@@ -11,6 +11,8 @@
 // Flags:
 //   --fixtures  also writes fixtures.html/fixtures.js with demo data (long name,
 //               unavailable size, scent notes/families) for testing UI states.
+//   --demo      also writes demo.html/demo.js: the shop with proposed names, notes
+//               and accords (scripts/demo-scents.js), to preview before going live.
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
@@ -22,6 +24,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE_ORDER = ["runtime.js", "catalog.js", "lib.js", "analytics.js", "art.js", "components.js", "pages.js", "app.js"];
 const STYLE_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css"];
 const fixtures = process.argv.includes("--fixtures");
+const demo = process.argv.includes("--demo"); // demo.html: the shop with scent data (scripts/demo-scents.js)
 
 // Normalize line endings: Git on Windows may check files out with CRLF.
 const read = async (p) => (await readFile(path.join(root, p), "utf8")).replace(/\r\n/g, "\n");
@@ -81,6 +84,16 @@ async function main() {
     await writeFile(path.join(root, "fixtures.html"), html);
     syntaxCheck(path.join(root, "fixtures.js"));
     console.log("fixtures.html + fixtures.js written (demo data — do not deploy)");
+  }
+  if (demo) {
+    const dj = await buildJs(["scripts/demo-scents.js"]);
+    await writeFile(path.join(root, "demo.js"), dj);
+    const html = out.html
+      .replace(/src="main.js[^"]*"/, 'src="demo.js"')
+      .replace("<title>", "<title>[DEMO] ");
+    await writeFile(path.join(root, "demo.html"), html);
+    syntaxCheck(path.join(root, "demo.js"));
+    console.log("demo.html + demo.js written (scent demo — do not deploy)");
   }
 }
 

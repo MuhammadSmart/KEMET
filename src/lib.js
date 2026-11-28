@@ -110,6 +110,19 @@ function unitName(p, key) {
   if (!p.sized) return p.name;
   return p.name + " " + sizeInfo(key).label;
 }
+function hasAccords(p) {
+  return !!(p.accords && p.accords.some(function (a) { return ACCORDS[a[0]]; }));
+}
+// Dark or light label for a bar colour, whichever reads better.
+function labelColorFor(hex) {
+  var c = hex.replace("#", "");
+  var lin = [0, 2, 4].map(function (i) {
+    var v = parseInt(c.slice(i, i + 2), 16) / 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  });
+  var L = 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2];
+  return (L + 0.05) / 0.05 > 1.05 / (L + 0.05) ? "#231c14" : "#ffffff";
+}
 function hasNotes(p) {
   var n = p.notes;
   return !!(n && ((n.top && n.top.length) || (n.heart && n.heart.length) || (n.base && n.base.length)));

@@ -9,7 +9,8 @@ const types = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8", ".jpg": "image/jpeg", ".webp": "image/webp",
   ".png": "image/png", ".svg": "image/svg+xml", ".woff2": "font/woff2",
-  ".ttf": "font/ttf", ".otf": "font/otf", ".json": "application/json", ".ico": "image/x-icon",
+  ".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".json": "application/json", ".ico": "image/x-icon",
+  ".webmanifest": "application/manifest+json",
 };
 
 http.createServer(async (req, res) => {

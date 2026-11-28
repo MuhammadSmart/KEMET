@@ -112,7 +112,7 @@ function App() {
         if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
       });
     }, { rootMargin: "0px 0px -6% 0px", threshold: 0.12 });
-    document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in)").forEach(function (el) { io.observe(el); });
+    document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in), .accords:not(.is-in)").forEach(function (el) { io.observe(el); });
     return function () { io.disconnect(); };
   }, [route.hash]);
 

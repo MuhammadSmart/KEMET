@@ -90,7 +90,7 @@ async function loadApp(root) {
   const files = ["runtime.js", "catalog.js", "lib.js", "analytics.js", "art.js", "components.js", "pages.js"];
   let code = "";
   for (const f of files) code += (await read("src/" + f)) + "\n";
-  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, ANALYTICS, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
+  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, ANALYTICS, SITE_URL, SHOP_ADDRESS, SHOP_MAPS_URL, WA_NUMBER, SIZE_PRICES, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
   vm.runInContext(code, sandbox);
   return sandbox.__app;
 }
@@ -153,7 +153,31 @@ export async function buildShell(root) {
     ? `<script defer src="${esc(a.scriptSrc)}" data-website-id="${esc(a.umamiWebsiteId)}" data-auto-track="false"` +
       (a.domains ? ` data-domains="${esc(a.domains)}"` : "") + `></script>`
     : "";
-  return { header, heroHtml, crumbSample, data, head, analyticsTag };
+  // Shop details for search engines (schema.org Store), from the catalog values.
+  const latin = (s) => s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
+  const prices = Object.values(A.SIZE_PRICES).flatMap((p) => [p.value, p.max ?? p.value]);
+  const store = {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    name: "عطور كيميت",
+    alternateName: "KEMET",
+    url: A.SITE_URL,
+    image: A.SITE_URL + "assets/6LDHZZDF.jpg",
+    logo: A.SITE_URL + "assets/icons/icon-512.png",
+    telephone: "+" + A.WA_NUMBER,
+    priceRange: `${Math.min(...prices)}–${Math.max(...prices)} EGP`,
+    currenciesAccepted: "EGP",
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: latin(A.SHOP_ADDRESS),
+      addressLocality: "حدائق الأهرام",
+      addressRegion: "الجيزة",
+      addressCountry: "EG",
+    },
+    hasMap: A.SHOP_MAPS_URL,
+  };
+  const jsonld = `<script type="application/ld+json">${JSON.stringify(store).replace(/</g, String.fromCharCode(92) + "u003c") /* keeps "</script>" out of the JSON */}</script>`;
+  return { header, heroHtml, crumbSample, data, head, analyticsTag, jsonld };
 }
 
 const between = (html, name, content) => {
@@ -180,5 +204,6 @@ export async function buildIndexHtml(root) {
     `<script>\n${bodyScript}\nwindow.__kemetShell.render(document.currentScript);\n</script>`,
   ].join("\n"));
   html = between(html, "analytics", shell.analyticsTag);
+  html = between(html, "jsonld", shell.jsonld);
   return { html, shell };
 }

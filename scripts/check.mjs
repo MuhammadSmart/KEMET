@@ -37,7 +37,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
-  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -85,6 +85,17 @@ await test("every product photo file exists", async () => {
   for (const p of K.products.filter((x) => x.photo)) {
     for (const f of [p.photo.w320, p.photo.w640, p.photo.jpg]) await access(path.join(root, f));
   }
+});
+
+await test("site icons, manifest and shop details for search engines are valid", async () => {
+  const html = await read("index.html");
+  for (const m of html.matchAll(/<link rel="(?:icon|apple-touch-icon|manifest)" href="([^"]+)"/g)) await access(path.join(root, m[1]));
+  const manifest = JSON.parse(await read("site.webmanifest"));
+  for (const icon of manifest.icons) await access(path.join(root, icon.src));
+  const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/)[1]);
+  assert.equal(ld["@type"], "Store");
+  assert.equal(ld.telephone, "+" + K.WA_NUMBER);
+  assert.ok(ld.address.streetAddress && !/[٠-٩]/.test(ld.address.streetAddress), "address digits should be 0-9");
 });
 
 await test("catalog matches the original site (IDs, names, sections, sizes, prices; descriptions may be edited)", async () => {
@@ -148,6 +159,21 @@ await test("statistics: page URLs leave out search text and sizes", () => {
   assert.equal(K.analyticsUrl("#/collection/men?q=abc&family=floral"), "/collection/men?family=floral");
   assert.equal(K.analyticsUrl("#sec-men"), "/collection/men");
   assert.match(K.ANALYTICS.umamiWebsiteId, /^$|^[0-9a-f-]{36}$/, "Umami Website ID should be empty or a UUID");
+});
+
+await test("scent profiles: known products, accords and families, every note explained", () => {
+  const families = K.SCENT_FAMILIES.map((f) => f.id);
+  for (const [id, prof] of Object.entries(K.SCENT_PROFILES)) {
+    assert.ok(K.products.some((p) => p.id === id), `${id}: no such product`);
+    assert.ok(families.includes(prof.family), `${id}: unknown family ${prof.family}`);
+    for (const [acc, strength] of prof.accords) {
+      assert.ok(K.ACCORDS[acc], `${id}: unknown accord ${acc}`);
+      assert.ok(strength > 0 && strength <= 100, `${id}: accord strength ${strength}`);
+    }
+    const notes = [].concat(prof.notes.top || [], prof.notes.heart || [], prof.notes.base || []);
+    const missing = notes.filter((n) => !K.NOTE_GLOSSARY[n]);
+    assert.deepEqual(missing, [], `${id}: notes without a plain-language description`);
+  }
 });
 
 await test("opening offer: shows until its end date and adds a line to orders", () => {

@@ -133,6 +133,44 @@ function HomePage() {
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
 }
 
+// ---------------- Scent profile (product page) ----------------
+// Main accords as bars (longest = strongest), then the notes by stage, then what
+// each note smells like in plain words, so a shopper can imagine the scent.
+function ScentProfile(props) {
+  var p = props.product;
+  var accords = (p.accords || []).filter(function (a) { return ACCORDS[a[0]]; })
+    .slice().sort(function (a, b) { return b[1] - a[1]; });
+  var stages = [["top", "الافتتاحية", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]];
+  var all = hasNotes(p) ? [].concat(p.notes.top || [], p.notes.heart || [], p.notes.base || []) : [];
+  var explained = all.filter(function (n, i) { return NOTE_GLOSSARY[n] && all.indexOf(n) === i; });
+  return h("div", { className: "scent" },
+    accords.length > 0 && h("div", { className: "scent-block" },
+      h("h3", { id: "accords-title" }, "الاتفاقات الرئيسية"),
+      h("ul", { className: "accords", role: "list", "aria-labelledby": "accords-title" }, accords.map(function (a) {
+        var acc = ACCORDS[a[0]];
+        var w = Math.max(28, Math.min(100, a[1]));
+        var ink = labelColorFor(acc.color);
+        // Light bars (white flowers, vanilla) get a hairline so they don't melt into the page.
+        return h("li", { key: a[0], className: "accord" + (ink === "#ffffff" ? "" : " accord-light"), style: { "--w": w + "%", background: acc.color, color: ink } },
+          h("span", null, acc.title), h("span", { className: "sr-only" }, "، قوته " + toAr(Math.round(a[1])) + " من ١٠٠"));
+      }))),
+    hasNotes(p) && h("div", { className: "scent-block" },
+      h("h3", null, "التونات"),
+      h("dl", { className: "notes" }, stages.map(function (row) {
+        var list = p.notes[row[0]] || [];
+        if (!list.length) return null;
+        return h("div", { key: row[0], className: "notes-row" },
+          h("dt", null, row[1], h("span", null, row[2])),
+          h("dd", null, h("ul", { className: "note-chips", role: "list" }, list.map(function (n) { return h("li", { key: n }, n); }))));
+      })),
+      explained.length > 0 && h("details", { className: "note-glossary" },
+        h("summary", null, "يعني إيه التونات دي؟"),
+        h("dl", null, explained.map(function (n) {
+          return h("div", { key: n }, h("dt", null, n), h("dd", null, NOTE_GLOSSARY[n]));
+        })))),
+    h(WhatsAppLink, { message: scentQuestion(p), className: "btn btn-secondary scent-ask", event: { name: "whatsapp-question", data: { topic: "scent", product: p.id } } }, "عندك سؤال عن الريحة؟"));
+}
+
 // ---------------- Collection ----------------
 function CollectionPage(props) {
   var route = props.route;
@@ -330,16 +368,8 @@ function ProductPage(props) {
 
       h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },
         h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),
-        hasNotes(p)
-          ? h("dl", { className: "notes" },
-            [["top", "النوتات العليا", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]].map(function (row) {
-              var list = (p.notes[row[0]] || []);
-              if (!list.length) return null;
-              return h("div", { key: row[0], className: "notes-row" },
-                h("dt", null, row[1], h("span", null, row[2])),
-                h("dd", null, list.join("، ")));
-            }))
-          : h("div", { className: "notes-ask" },
+        (hasAccords(p) || hasNotes(p)) && h(ScentProfile, { product: p }),
+        !(hasAccords(p) || hasNotes(p)) && h("div", { className: "notes-ask" },
             h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),
             h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name, event: { name: "whatsapp-question", data: { topic: p.sized ? "scent" : "product", product: p.id } } }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
 
