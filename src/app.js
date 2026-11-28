@@ -44,6 +44,7 @@ function useBasket() {
       return next;
     });
     setNotice("اتضاف " + unitName(p, size) + " × " + toAr(q) + " للسلة.");
+    trackEvent("add-to-basket", { product: p.id, size: size, qty: q });
   }, []);
   var clear = useCallback(function () { setBasket({}); setNotice("السلة اتفضّت."); }, []);
   return { basket: basket, setQty: setQty, add: add, clear: clear, notice: notice };
@@ -56,7 +57,7 @@ function App() {
   var _k = useState(false), basketOpen = _k[0], setBasketOpen = _k[1];
   var closeMenu = useCallback(function () { setMenuOpen(false); }, []);
   var closeBasket = useCallback(function () { setBasketOpen(false); }, []);
-  var openBasket = useCallback(function () { setMenuOpen(false); setBasketOpen(true); }, []);
+  var openBasket = useCallback(function () { setMenuOpen(false); setBasketOpen(true); trackEvent("open-basket"); }, []);
   var entries = useMemo(function () { return basketEntries(b.basket); }, [b.basket]);
   var totals = useMemo(function () { return basketTotals(entries); }, [entries]);
   var shop = useMemo(function () {
@@ -76,6 +77,7 @@ function App() {
     document.title = pageTitle(route);
     var key = routeKey(route.hash);
     var changedPage = key !== currentKey.current;
+    if (firstRender.current || changedPage) trackPage(route.hash, document.title);
     var pushed = navState.push;
     navState.push = false;
     if (pushed && changedPage) scrollMemory.current[currentKey.current] = navState.y || 0;

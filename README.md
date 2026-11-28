@@ -23,6 +23,26 @@ If the address changes (another host or your own domain), update `og:url` and
 `og:image` in `index.html`. WhatsApp and Facebook need that full address to show
 the preview picture when someone shares the link.
 
+## Visitor statistics
+
+Visits are counted with [Umami](https://cloud.umami.is), without cookies and
+without personal data. Open the Umami dashboard to see visitors, countries,
+devices, where they came from (WhatsApp, Instagram, Google…) and these events:
+
+| Event | When | Details sent |
+|---|---|---|
+| page view | every page opened | page path, e.g. `/p/w-hams` (no search text, no size) |
+| `add-to-basket` | Add to basket | product, size, quantity |
+| `open-basket` | basket opened | — |
+| `search` | visitor stops typing in search | the words (first 40 characters), number of results |
+| `whatsapp-order` | "Send order" in the basket, or "Order just this" on a product | basket or product, items, price range |
+| `whatsapp-question` | any other WhatsApp button | topic (scent, availability, sets, no results, general) and page |
+
+Settings are in `src/analytics.js`: the Website ID, and `domains`, which limits
+counting to the published site, so local previews don't count. If the site
+address changes, update `domains`. Clear the Website ID and rebuild to turn
+statistics off.
+
 ## Preview locally
 
 ```

@@ -14632,6 +14632,97 @@ Error generating stack: ` + i.message + `
       return (hash || "#/").split("?")[0] || "#/";
     }
     
+    // ===== src/analytics.js =====
+    // Visitor statistics with Umami (https://umami.is): no cookies, no personal data.
+    //
+    // To turn it on: create a website in Umami, paste its Website ID below, then run
+    // node scripts/build.mjs. Empty ID = off (no script is loaded, nothing is sent).
+    var ANALYTICS = {
+      umamiWebsiteId: "c1ad891b-bbb7-4356-b987-1fd23a27d12d",
+      scriptSrc: "https://cloud.umami.is/script.js",
+      // Only the published site is counted, not local previews.
+      domains: "muhammadsmart.github.io"
+    };
+    
+    // What gets recorded (see README "Visitor statistics"):
+    //   page views          one per page, e.g. /p/w-hams, /collection/men (no search text, no size)
+    //   add-to-basket       product, size, quantity
+    //   open-basket
+    //   search              the search words (first 40 characters) and how many results
+    //   whatsapp-order      the order button in the basket or on a product page, with totals
+    //   whatsapp-question   any other WhatsApp button, with its topic and page
+    // Never sent: names, phone numbers, the WhatsApp message itself.
+    
+    var analyticsQueue = [];
+    var analyticsTimer = null;
+    var analyticsLastUrl = null;
+    
+    function analyticsOn() {
+      return !!ANALYTICS.umamiWebsiteId;
+    }
+    function analyticsReady() {
+      return typeof window.umami === "object" && window.umami !== null && typeof window.umami.track === "function";
+    }
+    function flushAnalytics() {
+      if (!analyticsReady()) return false;
+      while (analyticsQueue.length) {
+        var send = analyticsQueue.shift();
+        try { send(window.umami); } catch (e) { /* statistics must never break the shop */ }
+      }
+      return true;
+    }
+    // The Umami script loads after the app starts, so early calls wait in a queue.
+    function enqueueAnalytics(send) {
+      if (!analyticsOn()) return;
+      analyticsQueue.push(send);
+      if (flushAnalytics() || analyticsTimer) return;
+      var tries = 0;
+      analyticsTimer = setInterval(function () {
+        tries++;
+        if (flushAnalytics() || tries > 40) { // give up after ~20 s (blocked by an ad blocker, offline...)
+          clearInterval(analyticsTimer);
+          analyticsTimer = null;
+          if (tries > 40) analyticsQueue.length = 0;
+        }
+      }, 500);
+    }
+    
+    // "#/p/w-hams?size=s30" -> "/p/w-hams"; "#/collection?q=..&family=floral" -> "/collection?family=floral".
+    // Search text and sizes stay out of page URLs (search has its own event).
+    function analyticsUrl(hash) {
+      var raw = (hash || "").replace(/^#/, "");
+      var split = raw.split("?");
+      var path = split[0] || "/";
+      var legacy = path.match(/^sec-([a-z]+)$/);
+      if (legacy) path = "/collection/" + legacy[1];
+      if (path.charAt(0) !== "/") path = "/" + path;
+      var params = new URLSearchParams(split[1] || "");
+      var keep = new URLSearchParams();
+      if (params.get("family")) keep.set("family", params.get("family"));
+      if (params.get("s")) keep.set("s", params.get("s"));
+      var qs = keep.toString();
+      return path + (qs ? "?" + qs : "");
+    }
+    
+    function trackPage(hash, title) {
+      var url = analyticsUrl(hash);
+      var previous = analyticsLastUrl;
+      analyticsLastUrl = url;
+      enqueueAnalytics(function (umami) {
+        umami.track(function (props) {
+          var next = Object.assign({}, props, { url: url, title: title });
+          // After the first page, the "referrer" is our own previous page, not the
+          // site the visitor came from, so Umami counts the source only once.
+          if (previous) next.referrer = location.origin + location.pathname + "#" + previous;
+          return next;
+        });
+      });
+    }
+    
+    function trackEvent(name, data) {
+      enqueueAnalytics(function (umami) { umami.track(name, data); });
+    }
+    
     // ===== src/art.js =====
     // Brand drawings: the winged-ankh emblem (from the original site), product
     // drawings for items without photos, the chevron-to-wave divider, lotus motif, icons.
@@ -14867,10 +14958,17 @@ Error generating stack: ` + i.message + `
     }
     
     function WhatsAppLink(props) {
+      // Every WhatsApp button is counted: orders and specific questions pass their own
+      // event; anything else is a general question from the current page.
+      var onClick = function (e) {
+        if (props.event) trackEvent(props.event.name, props.event.data);
+        else trackEvent("whatsapp-question", { topic: "general", page: analyticsUrl(location.hash) });
+        if (props.onClick) props.onClick(e);
+      };
       return h("a", {
         className: props.className || "btn btn-secondary",
         href: waLink(props.message), target: "_blank", rel: "noopener noreferrer",
-        onClick: props.onClick
+        onClick: onClick
       }, h(Icon, { name: "chat" }), h("span", null, props.children),
       h("span", { className: "sr-only" }, " (بيفتح واتساب)"));
     }
@@ -15048,7 +15146,10 @@ Error generating stack: ` + i.message + `
               h("p", { className: "basket-total" }, h("span", null, "الإجمالي"), h("b", null, money(totals.lo, totals.hi))),
               hasRange && h("p", { className: "fine" }, "سعر حجم ٥٠ مل بين ٣٥٠ و٤٠٠ جنيه، والمحل بيأكد السعر النهائي في الرد."),
               orderable.length > 0
-                ? h(WhatsAppLink, { message: orderMessage(orderable), className: "btn btn-primary btn-block" }, "ابعت الطلب على واتساب")
+                ? h(WhatsAppLink, {
+                  message: orderMessage(orderable), className: "btn btn-primary btn-block",
+                  event: { name: "whatsapp-order", data: { source: "basket", lines: orderable.length, items: totals.qty, total_min: totals.lo, total_max: totals.hi } }
+                }, "ابعت الطلب على واتساب")
                 : h("p", { className: "fine" }, "مفيش منتجات متاحة في السلة."),
               h("p", { className: "fine" }, "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع. المحل بيرد عليك بالتفاصيل."),
               h("div", { className: "basket-actions" },
@@ -15179,7 +15280,8 @@ Error generating stack: ` + i.message + `
             h("p", null, "للطلب والاستفسار"),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
             h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
-        h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
+        h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل.",
+          analyticsOn() && " بنعدّ الزيارات من غير كوكيز ومن غير أي بيانات شخصية، عشان نحسّن الموقع."));
     }
     
     var ErrorBoundary = (function () {
@@ -15323,6 +15425,14 @@ Error generating stack: ` + i.message + `
         return true;
       });
       var filtered = !!(section || family || nq);
+      // Count a search once the visitor stops typing.
+      var resultCount = results.length;
+      useEffect(function () {
+        var words = q.trim();
+        if (words.length < 2) return;
+        var t = setTimeout(function () { trackEvent("search", { q: words.slice(0, 40), results: resultCount }); }, 1500);
+        return function () { clearTimeout(t); };
+      }, [q]);
       var title = section ? section.title : "كل المنتجات";
       var crumbs = [{ to: "#/", label: "الرئيسية" }].concat(section ? [{ to: "#/collection", label: "كل المنتجات" }, { label: section.title }] : [{ label: "كل المنتجات" }]);
       var searchId = useId();
@@ -15359,7 +15469,7 @@ Error generating stack: ` + i.message + `
           h("p", null, "جرّب اسم تاني أو شيل الفلاتر. أو اسألنا على واتساب عن اللي بتدوّر عليه."),
           h("div", { className: "btn-row" },
             h(Link, { to: "#/collection", className: "btn btn-primary" }, "اعرض كل المنتجات"),
-            h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : "") }, "اسأل على واتساب")));
+            h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : ""), event: { name: "whatsapp-question", data: { topic: "no-results" } } }, "اسأل على واتساب")));
       } else if (!filtered) {
         body = SECTIONS.map(function (s) {
           var items = productsIn(s.id);
@@ -15408,7 +15518,7 @@ Error generating stack: ` + i.message + `
     function SetsCard() {
       return h("div", { className: "sets-card" },
         h("p", null, "جمّع طقمك بنفسك: اختار أي ٢ أو ٣ منتجات من الأقسام، واسألنا على واتساب عن سعر الطقم والعروض المتاحة."),
-        h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary" }, "اسأل عن الأطقم على واتساب"));
+        h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary", event: { name: "whatsapp-question", data: { topic: "sets" } } }, "اسأل عن الأطقم على واتساب"));
     }
     
     // ---------------- Product ----------------
@@ -15471,10 +15581,13 @@ Error generating stack: ` + i.message + `
                       h("button", { type: "button", className: "btn btn-primary btn-large buy-add", onClick: addToBasket },
                         added ? h(Fragment, null, h(Icon, { name: "check", size: 20 }), "اتضاف للسلة") : h(Fragment, null, "أضف للسلة", h("span", { className: "buy-add-price" }, money(r.lo, r.hi))))),
                     added && h("button", { type: "button", className: "text-link buy-review", onClick: shop.openBasket }, "راجع السلة وابعت الطلب"),
-                    h(WhatsAppLink, { message: directOrder, className: "btn btn-secondary btn-block" }, "اطلب ده بس على واتساب"))
+                    h(WhatsAppLink, {
+                      message: directOrder, className: "btn btn-secondary btn-block",
+                      event: { name: "whatsapp-order", data: { source: "product", product: p.id, size: size, items: qty, total_min: r.lo, total_max: r.hi } }
+                    }, "اطلب ده بس على واتساب"))
                   : h("div", { className: "unavailable-note", role: "note" },
                     h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),
-                    h(WhatsAppLink, { message: availabilityQuestion(p, size) }, "اسأل عن التوفر"))),
+                    h(WhatsAppLink, { message: availabilityQuestion(p, size), event: { name: "whatsapp-question", data: { topic: "availability", product: p.id } } }, "اسأل عن التوفر"))),
     
               h("ul", { className: "assurance", role: "list" },
                 h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),
@@ -15494,7 +15607,7 @@ Error generating stack: ` + i.message + `
                 }))
               : h("div", { className: "notes-ask" },
                 h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),
-                h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
+                h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name, event: { name: "whatsapp-question", data: { topic: p.sized ? "scent" : "product", product: p.id } } }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
     
           related.length > 0 && h("section", { className: "section", "aria-labelledby": "related-title" },
             h("div", { className: "section-head" },
@@ -15559,6 +15672,7 @@ Error generating stack: ` + i.message + `
           return next;
         });
         setNotice("اتضاف " + unitName(p, size) + " × " + toAr(q) + " للسلة.");
+        trackEvent("add-to-basket", { product: p.id, size: size, qty: q });
       }, []);
       var clear = useCallback(function () { setBasket({}); setNotice("السلة اتفضّت."); }, []);
       return { basket: basket, setQty: setQty, add: add, clear: clear, notice: notice };
@@ -15571,7 +15685,7 @@ Error generating stack: ` + i.message + `
       var _k = useState(false), basketOpen = _k[0], setBasketOpen = _k[1];
       var closeMenu = useCallback(function () { setMenuOpen(false); }, []);
       var closeBasket = useCallback(function () { setBasketOpen(false); }, []);
-      var openBasket = useCallback(function () { setMenuOpen(false); setBasketOpen(true); }, []);
+      var openBasket = useCallback(function () { setMenuOpen(false); setBasketOpen(true); trackEvent("open-basket"); }, []);
       var entries = useMemo(function () { return basketEntries(b.basket); }, [b.basket]);
       var totals = useMemo(function () { return basketTotals(entries); }, [entries]);
       var shop = useMemo(function () {
@@ -15591,6 +15705,7 @@ Error generating stack: ` + i.message + `
         document.title = pageTitle(route);
         var key = routeKey(route.hash);
         var changedPage = key !== currentKey.current;
+        if (firstRender.current || changedPage) trackPage(route.hash, document.title);
         var pushed = navState.push;
         navState.push = false;
         if (pushed && changedPage) scrollMemory.current[currentKey.current] = navState.y || 0;

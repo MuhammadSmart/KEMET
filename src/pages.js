@@ -116,6 +116,14 @@ function CollectionPage(props) {
     return true;
   });
   var filtered = !!(section || family || nq);
+  // Count a search once the visitor stops typing.
+  var resultCount = results.length;
+  useEffect(function () {
+    var words = q.trim();
+    if (words.length < 2) return;
+    var t = setTimeout(function () { trackEvent("search", { q: words.slice(0, 40), results: resultCount }); }, 1500);
+    return function () { clearTimeout(t); };
+  }, [q]);
   var title = section ? section.title : "كل المنتجات";
   var crumbs = [{ to: "#/", label: "الرئيسية" }].concat(section ? [{ to: "#/collection", label: "كل المنتجات" }, { label: section.title }] : [{ label: "كل المنتجات" }]);
   var searchId = useId();
@@ -152,7 +160,7 @@ function CollectionPage(props) {
       h("p", null, "جرّب اسم تاني أو شيل الفلاتر. أو اسألنا على واتساب عن اللي بتدوّر عليه."),
       h("div", { className: "btn-row" },
         h(Link, { to: "#/collection", className: "btn btn-primary" }, "اعرض كل المنتجات"),
-        h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : "") }, "اسأل على واتساب")));
+        h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : ""), event: { name: "whatsapp-question", data: { topic: "no-results" } } }, "اسأل على واتساب")));
   } else if (!filtered) {
     body = SECTIONS.map(function (s) {
       var items = productsIn(s.id);
@@ -201,7 +209,7 @@ function CollectionPage(props) {
 function SetsCard() {
   return h("div", { className: "sets-card" },
     h("p", null, "جمّع طقمك بنفسك: اختار أي ٢ أو ٣ منتجات من الأقسام، واسألنا على واتساب عن سعر الطقم والعروض المتاحة."),
-    h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary" }, "اسأل عن الأطقم على واتساب"));
+    h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary", event: { name: "whatsapp-question", data: { topic: "sets" } } }, "اسأل عن الأطقم على واتساب"));
 }
 
 // ---------------- Product ----------------
@@ -264,10 +272,13 @@ function ProductPage(props) {
                   h("button", { type: "button", className: "btn btn-primary btn-large buy-add", onClick: addToBasket },
                     added ? h(Fragment, null, h(Icon, { name: "check", size: 20 }), "اتضاف للسلة") : h(Fragment, null, "أضف للسلة", h("span", { className: "buy-add-price" }, money(r.lo, r.hi))))),
                 added && h("button", { type: "button", className: "text-link buy-review", onClick: shop.openBasket }, "راجع السلة وابعت الطلب"),
-                h(WhatsAppLink, { message: directOrder, className: "btn btn-secondary btn-block" }, "اطلب ده بس على واتساب"))
+                h(WhatsAppLink, {
+                  message: directOrder, className: "btn btn-secondary btn-block",
+                  event: { name: "whatsapp-order", data: { source: "product", product: p.id, size: size, items: qty, total_min: r.lo, total_max: r.hi } }
+                }, "اطلب ده بس على واتساب"))
               : h("div", { className: "unavailable-note", role: "note" },
                 h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),
-                h(WhatsAppLink, { message: availabilityQuestion(p, size) }, "اسأل عن التوفر"))),
+                h(WhatsAppLink, { message: availabilityQuestion(p, size), event: { name: "whatsapp-question", data: { topic: "availability", product: p.id } } }, "اسأل عن التوفر"))),
 
           h("ul", { className: "assurance", role: "list" },
             h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),
@@ -287,7 +298,7 @@ function ProductPage(props) {
             }))
           : h("div", { className: "notes-ask" },
             h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),
-            h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
+            h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name, event: { name: "whatsapp-question", data: { topic: p.sized ? "scent" : "product", product: p.id } } }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
 
       related.length > 0 && h("section", { className: "section", "aria-labelledby": "related-title" },
         h("div", { className: "section-head" },

@@ -87,10 +87,10 @@ async function loadApp(root) {
     URLSearchParams, encodeURIComponent, decodeURIComponent, console,
   };
   vm.createContext(sandbox);
-  const files = ["runtime.js", "catalog.js", "lib.js", "art.js", "components.js", "pages.js"];
+  const files = ["runtime.js", "catalog.js", "lib.js", "analytics.js", "art.js", "components.js", "pages.js"];
   let code = "";
   for (const f of files) code += (await read("src/" + f)) + "\n";
-  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
+  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, ANALYTICS, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
   vm.runInContext(code, sandbox);
   return sandbox.__app;
 }
@@ -148,7 +148,12 @@ export async function buildShell(root) {
   };
   const head = { hero: { mobile: A.HERO_PHOTO.mobile, desktop: A.HERO_PHOTO.desktop }, photos: {} };
   for (const p of A.products) if (p.photo) head.photos[p.id] = [p.photo.w320, p.photo.w640];
-  return { header, heroHtml, crumbSample, data, head };
+  const a = A.ANALYTICS;
+  const analyticsTag = a.umamiWebsiteId
+    ? `<script defer src="${esc(a.scriptSrc)}" data-website-id="${esc(a.umamiWebsiteId)}" data-auto-track="false"` +
+      (a.domains ? ` data-domains="${esc(a.domains)}"` : "") + `></script>`
+    : "";
+  return { header, heroHtml, crumbSample, data, head, analyticsTag };
 }
 
 const between = (html, name, content) => {
@@ -174,5 +179,6 @@ export async function buildIndexHtml(root) {
     `<script>if (window.__kemetHome) { var t = document.getElementById("shell-home"); t.parentNode.insertBefore(document.importNode(t.content, true), t); }</script>`,
     `<script>\n${bodyScript}\nwindow.__kemetShell.render(document.currentScript);\n</script>`,
   ].join("\n"));
+  html = between(html, "analytics", shell.analyticsTag);
   return { html, shell };
 }

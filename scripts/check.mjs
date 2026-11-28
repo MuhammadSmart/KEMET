@@ -36,8 +36,8 @@ const sandbox = {
   useSyncExternalStore: () => "", useMemo: (f) => f(),
 };
 vm.createContext(sandbox);
-const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) +
-  "\n;globalThis.__k = { products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -137,6 +137,16 @@ await test("router handles home, collection, product, legacy anchors and unknown
   assert.equal(r("#/collection/unknown").name, "notfound");
   assert.equal(r("#/whatever").name, "notfound");
   assert.equal(K.collectionHash("women", "مسك", null), "#/collection/women?q=%D9%85%D8%B3%D9%83");
+});
+
+await test("statistics: page URLs leave out search text and sizes", () => {
+  assert.equal(K.analyticsUrl(""), "/");
+  assert.equal(K.analyticsUrl("#/"), "/");
+  assert.equal(K.analyticsUrl("#/?s=story"), "/?s=story");
+  assert.equal(K.analyticsUrl("#/p/w-hams?size=s30"), "/p/w-hams");
+  assert.equal(K.analyticsUrl("#/collection/men?q=abc&family=floral"), "/collection/men?family=floral");
+  assert.equal(K.analyticsUrl("#sec-men"), "/collection/men");
+  assert.match(K.ANALYTICS.umamiWebsiteId, /^$|^[0-9a-f-]{36}$/, "Umami Website ID should be empty or a UUID");
 });
 
 await test("prices: default size, ranges, per-ml labels", () => {

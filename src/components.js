@@ -18,10 +18,17 @@ function Link(props) {
 }
 
 function WhatsAppLink(props) {
+  // Every WhatsApp button is counted: orders and specific questions pass their own
+  // event; anything else is a general question from the current page.
+  var onClick = function (e) {
+    if (props.event) trackEvent(props.event.name, props.event.data);
+    else trackEvent("whatsapp-question", { topic: "general", page: analyticsUrl(location.hash) });
+    if (props.onClick) props.onClick(e);
+  };
   return h("a", {
     className: props.className || "btn btn-secondary",
     href: waLink(props.message), target: "_blank", rel: "noopener noreferrer",
-    onClick: props.onClick
+    onClick: onClick
   }, h(Icon, { name: "chat" }), h("span", null, props.children),
   h("span", { className: "sr-only" }, " (بيفتح واتساب)"));
 }
@@ -199,7 +206,10 @@ function BasketDrawer(props) {
           h("p", { className: "basket-total" }, h("span", null, "الإجمالي"), h("b", null, money(totals.lo, totals.hi))),
           hasRange && h("p", { className: "fine" }, "سعر حجم ٥٠ مل بين ٣٥٠ و٤٠٠ جنيه، والمحل بيأكد السعر النهائي في الرد."),
           orderable.length > 0
-            ? h(WhatsAppLink, { message: orderMessage(orderable), className: "btn btn-primary btn-block" }, "ابعت الطلب على واتساب")
+            ? h(WhatsAppLink, {
+              message: orderMessage(orderable), className: "btn btn-primary btn-block",
+              event: { name: "whatsapp-order", data: { source: "basket", lines: orderable.length, items: totals.qty, total_min: totals.lo, total_max: totals.hi } }
+            }, "ابعت الطلب على واتساب")
             : h("p", { className: "fine" }, "مفيش منتجات متاحة في السلة."),
           h("p", { className: "fine" }, "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع. المحل بيرد عليك بالتفاصيل."),
           h("div", { className: "basket-actions" },
@@ -330,7 +340,8 @@ function Footer() {
         h("p", null, "للطلب والاستفسار"),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
         h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
-    h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
+    h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل.",
+      analyticsOn() && " بنعدّ الزيارات من غير كوكيز ومن غير أي بيانات شخصية، عشان نحسّن الموقع."));
 }
 
 var ErrorBoundary = (function () {

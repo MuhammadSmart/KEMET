@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { buildIndexHtml } from "./shell.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE_ORDER = ["runtime.js", "catalog.js", "lib.js", "art.js", "components.js", "pages.js", "app.js"];
+const SOURCE_ORDER = ["runtime.js", "catalog.js", "lib.js", "analytics.js", "art.js", "components.js", "pages.js", "app.js"];
 const STYLE_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css"];
 const fixtures = process.argv.includes("--fixtures");
 
