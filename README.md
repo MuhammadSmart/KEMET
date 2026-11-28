@@ -7,7 +7,7 @@ to the shop (`wa.me/201154615084`). The site takes no payment.
 ## Deploy
 
 The site is published with **GitHub Pages** from the `main` branch:
-https://muhammadsmart.github.io/KEMET/
+https://muhammadsmart.github.io/kemet-perfumes/
 
 1. On GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**,
    then pick `main` and `/ (root)`, and save. (Free accounts need a public repo.)
