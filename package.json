@@ -1,0 +1,14 @@
+{
+  "name": "kemet-perfumes",
+  "private": true,
+  "description": "عطور كيميت — static storefront (WhatsApp ordering). No dependencies: Node 22+ only.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:fixtures": "node scripts/build.mjs --fixtures",
+    "check": "node scripts/check.mjs",
+    "serve": "node scripts/serve.mjs 8080 .",
+    "screenshots": "node scripts/screenshots.mjs http://localhost:8080/ screenshots home=#/ collection=#/collection product=#/p/w-nefertari"
+  },
+  "engines": { "node": ">=22" }
+}
