@@ -283,7 +283,7 @@ function ProductPage(props) {
           h(PageHeading, { className: "pdp-title" }, p.name),
           p.sized && h("p", { className: "pdp-type" }, "أو دو بارفان"),
           p.character && h("p", { className: "pdp-character" }, p.character),
-          h("p", { className: "pdp-desc" }, p.desc),
+          p.desc !== GENERIC_DESC && h("p", { className: "pdp-desc" }, p.desc),
 
           h("div", { className: "buy-box" },
             h("p", { className: "pdp-price", "aria-live": "polite" },
@@ -302,15 +302,20 @@ function ProductPage(props) {
                 h(WhatsAppLink, {
                   message: directOrder, className: "btn btn-secondary btn-block",
                   event: { name: "whatsapp-order", data: { source: "product", product: p.id, size: size, items: qty, total_min: r.lo, total_max: r.hi } }
-                }, "اطلب ده بس على واتساب"))
+                }, "اطلبه دلوقتي على واتساب"))
               : h("div", { className: "unavailable-note", role: "note" },
                 h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),
                 h(WhatsAppLink, { message: availabilityQuestion(p, size), event: { name: "whatsapp-question", data: { topic: "availability", product: p.id } } }, "اسأل عن التوفر"))),
 
+          // How ordering works: one row per point, title on its own line.
           h("ul", { className: "assurance", role: "list" },
-            h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),
-            h("li", null, h(Icon, { name: "truck" }), h("span", null, h("b", null, "التوصيل والدفع. "), "بعد ما تبعت الطلب، المحل بيرد عليك بتفاصيل التوصيل والدفع.")),
-            h("li", null, h(Icon, { name: "swap" }), h("span", null, h("b", null, "الاستبدال والاسترجاع. "), "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."))))),
+            [["chat", "الطلب على واتساب", "طلبك بيتبعت رسالة جاهزة لواتساب كيميت، ومفيش دفع على الموقع."],
+             ["truck", "التوصيل والدفع", "بعد ما تبعت الطلب، بنرد عليك بتفاصيل التوصيل والدفع."],
+             ["swap", "الاستبدال والاسترجاع", "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."]].map(function (row) {
+              return h("li", { key: row[0] },
+                h("span", { className: "assurance-icon", "aria-hidden": "true" }, h(Icon, { name: row[0], size: 18 })),
+                h("span", { className: "assurance-text" }, h("b", null, row[1]), h("span", null, row[2])));
+            })))),
 
       h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },
         h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),

@@ -14315,7 +14315,9 @@ Error generating stack: ` + i.message + `
       { id: "musky", title: "مسكي" }
     ];
     
-    var GENERIC_DESC = "منتج كيميت من المحل، اسأل عن التفاصيل على واتساب.";
+    // Placeholder for products without their own description. Product pages don't
+    // show it (the "اسأل عن الريحة" box below covers that); kept for the data.
+    var GENERIC_DESC = "منتج من كيميت، اسأل عن التفاصيل على واتساب.";
     
     // A photo = assets/<code>.jpg plus its WebP copies assets/img/<code>-320.webp and -640.webp.
     function photoSet(code) {
@@ -14363,14 +14365,14 @@ Error generating stack: ` + i.message + `
       perfume("w-qamar", "women", "قمر ١٤"),
       perfume("w-dalal", "women", "دلال"),
       // بيرفيوم رجالي
-      perfume("kemet-edp", "men", "عطر كيميت", "عطر كيميت الأصلي، من المحل على طول."),
+      perfume("kemet-edp", "men", "عطر كيميت", "عطر كيميت الأصلي."),
       perfume("m-malaki", "men", "ملكي"),
       perfume("m-fares", "men", "فارس"),
       perfume("m-anbar", "men", "عنبر بلاك"),
       perfume("m-saqr", "men", "صقر"),
       // لوشن
-      single("l-sunsilk", "lotion", "بودي لوشن صن سيلك", { kind: "lotion", accent: "#f2d878" }, "بودي لوشن كيميت، من المحل على طول."),
-      single("l-vanilla", "lotion", "بودي لوشن دارك فانيليا", { kind: "lotion", accent: "#a8842e" }, "بودي لوشن كيميت، من المحل على طول."),
+      single("l-sunsilk", "lotion", "بودي لوشن صن سيلك", { kind: "lotion", accent: "#f2d878" }),
+      single("l-vanilla", "lotion", "بودي لوشن دارك فانيليا", { kind: "lotion", accent: "#a8842e" }),
       single("l-rose", "lotion", "بودي لوشن روز", { kind: "lotion", accent: "#e6c765" }),
       single("l-luna", "lotion", "بودي لوشن لونا", { kind: "lotion", accent: "#c9a227" }),
       single("l-coco", "lotion", "بودي لوشن كوكو", { kind: "lotion", accent: "#8a6a2a" }),
@@ -15630,7 +15632,7 @@ Error generating stack: ` + i.message + `
               h(PageHeading, { className: "pdp-title" }, p.name),
               p.sized && h("p", { className: "pdp-type" }, "أو دو بارفان"),
               p.character && h("p", { className: "pdp-character" }, p.character),
-              h("p", { className: "pdp-desc" }, p.desc),
+              p.desc !== GENERIC_DESC && h("p", { className: "pdp-desc" }, p.desc),
     
               h("div", { className: "buy-box" },
                 h("p", { className: "pdp-price", "aria-live": "polite" },
@@ -15649,15 +15651,20 @@ Error generating stack: ` + i.message + `
                     h(WhatsAppLink, {
                       message: directOrder, className: "btn btn-secondary btn-block",
                       event: { name: "whatsapp-order", data: { source: "product", product: p.id, size: size, items: qty, total_min: r.lo, total_max: r.hi } }
-                    }, "اطلب ده بس على واتساب"))
+                    }, "اطلبه دلوقتي على واتساب"))
                   : h("div", { className: "unavailable-note", role: "note" },
                     h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),
                     h(WhatsAppLink, { message: availabilityQuestion(p, size), event: { name: "whatsapp-question", data: { topic: "availability", product: p.id } } }, "اسأل عن التوفر"))),
     
+              // How ordering works: one row per point, title on its own line.
               h("ul", { className: "assurance", role: "list" },
-                h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),
-                h("li", null, h(Icon, { name: "truck" }), h("span", null, h("b", null, "التوصيل والدفع. "), "بعد ما تبعت الطلب، المحل بيرد عليك بتفاصيل التوصيل والدفع.")),
-                h("li", null, h(Icon, { name: "swap" }), h("span", null, h("b", null, "الاستبدال والاسترجاع. "), "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."))))),
+                [["chat", "الطلب على واتساب", "طلبك بيتبعت رسالة جاهزة لواتساب كيميت، ومفيش دفع على الموقع."],
+                 ["truck", "التوصيل والدفع", "بعد ما تبعت الطلب، بنرد عليك بتفاصيل التوصيل والدفع."],
+                 ["swap", "الاستبدال والاسترجاع", "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."]].map(function (row) {
+                  return h("li", { key: row[0] },
+                    h("span", { className: "assurance-icon", "aria-hidden": "true" }, h(Icon, { name: row[0], size: 18 })),
+                    h("span", { className: "assurance-text" }, h("b", null, row[1]), h("span", null, row[2])));
+                })))),
     
           h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },
             h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),

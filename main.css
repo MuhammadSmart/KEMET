@@ -725,11 +725,16 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 }
 .buy-review { justify-self: start; }
 .unavailable-note { display: grid; gap: var(--space-3); justify-items: start; padding: var(--space-4); border-radius: var(--radius); background: var(--alabaster-2); border: 1px dashed var(--line-strong); }
-.assurance { list-style: none; padding: var(--space-4); margin-top: var(--space-4); display: grid; gap: var(--space-3); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); font-size: var(--step--1); }
-.assurance li { display: grid; grid-template-columns: 24px 1fr; gap: var(--space-3); align-items: start; }
-.assurance .icon { color: var(--cobalt); margin-top: 2px; }
-.assurance span { color: var(--ink-2); }
-.assurance b { color: var(--ink); }
+.assurance {
+  list-style: none; margin: var(--space-5) 0 0; padding: 0 var(--space-4);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.assurance li { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: var(--space-3); align-items: start; padding-block: var(--space-3); }
+.assurance li + li { border-top: 1px solid var(--line); }
+.assurance-icon { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; background: var(--cobalt-tint); color: var(--cobalt); }
+.assurance-text { display: grid; gap: 2px; }
+.assurance-text b { font-weight: 700; color: var(--ink); }
+.assurance-text span { font-size: var(--step--1); color: var(--ink-2); line-height: 1.6; }
 .pdp-notes { padding-block: var(--space-6) var(--space-4); }
 .pdp-notes h2 { margin-bottom: var(--space-4); }
 .notes { display: grid; gap: 0; border-top: 1px solid var(--line); }
@@ -737,7 +742,7 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .notes dt { font-weight: 700; display: grid; }
 .notes dt span { font-weight: 400; font-size: var(--step--1); color: var(--ink-2); }
 .notes dd { margin: 0; }
-.notes-ask { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius); background: var(--alabaster-2); }
+.notes-ask { display: grid; justify-items: start; gap: var(--space-3); padding: var(--space-5); border-radius: var(--radius); background: var(--alabaster-2); }
 .notes-ask p { max-width: 46ch; }
 @media (min-width: 900px) {
   .pdp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-7); align-items: start; }

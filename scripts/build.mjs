@@ -13,6 +13,7 @@
 //               unavailable size, scent notes/families) for testing UI states.
 import { readFile, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildIndexHtml } from "./shell.mjs";
@@ -47,8 +48,18 @@ function syntaxCheck(file) {
   execFileSync(process.execPath, ["--check", file], { stdio: "inherit" });
 }
 
+// index.html asks for main.js?v=<hash> and main.css?v=<hash>, so after an update a
+// browser never pairs a fresh page with a cached old script (e.g. one that still
+// points at renamed images).
+const version = (text) => createHash("sha256").update(text).digest("hex").slice(0, 10);
+
 export async function buildAll() {
-  return { js: await buildJs(), css: await buildCss(), html: (await buildIndexHtml(root)).html };
+  const js = await buildJs();
+  const css = await buildCss();
+  const html = (await buildIndexHtml(root)).html
+    .replace(/src="main\.js(\?v=[^"]*)?"/, `src="main.js?v=${version(js)}"`)
+    .replace(/href="main\.css(\?v=[^"]*)?"/, `href="main.css?v=${version(css)}"`);
+  return { js, css, html };
 }
 
 async function main() {
@@ -65,7 +76,7 @@ async function main() {
     const fx = await buildJs(["scripts/fixtures.js"]);
     await writeFile(path.join(root, "fixtures.js"), fx);
     const html = out.html
-      .replace('src="main.js"', 'src="fixtures.js"')
+      .replace(/src="main\.js[^"]*"/, 'src="fixtures.js"')
       .replace("<title>", "<title>[FIXTURES] ");
     await writeFile(path.join(root, "fixtures.html"), html);
     syntaxCheck(path.join(root, "fixtures.js"));

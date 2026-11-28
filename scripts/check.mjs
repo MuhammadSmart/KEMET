@@ -87,7 +87,7 @@ await test("every product photo file exists", async () => {
   }
 });
 
-await test("catalog matches the original site (IDs, names, sections, sizes, prices)", async () => {
+await test("catalog matches the original site (IDs, names, sections, sizes, prices; descriptions may be edited)", async () => {
   let legacy;
   try {
     legacy = execFileSync("git", ["show", "413e16e:main.js"], { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
@@ -102,7 +102,8 @@ await test("catalog matches the original site (IDs, names, sections, sizes, pric
     + "\nvar import_jsx_runtime = {};\n";
   vm.runInContext(stubs + legacy.slice(start, end) + "\n;globalThis.__l = { products, SIZE_PRICES, PERFUME_SIZES, SECTIONS, WA_NUMBER };", box);
   const L = box.__l;
-  const strip = (arr) => arr.map((p) => ({ id: p.id, section: p.section, name: p.name, desc: p.desc, sized: p.sized }));
+  // Descriptions are shop copy the owner rewrites (e.g. "من المحل" dropped), so they aren't compared.
+  const strip = (arr) => arr.map((p) => ({ id: p.id, section: p.section, name: p.name, sized: p.sized }));
   assert.deepEqual(JSON.parse(JSON.stringify(strip(K.products))), JSON.parse(JSON.stringify(strip(L.products))));
   assert.deepEqual(JSON.parse(JSON.stringify(K.SIZE_PRICES)), JSON.parse(JSON.stringify(L.SIZE_PRICES)));
   assert.deepEqual(JSON.parse(JSON.stringify(K.PERFUME_SIZES)), JSON.parse(JSON.stringify(L.PERFUME_SIZES)));

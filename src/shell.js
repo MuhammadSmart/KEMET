@@ -78,7 +78,7 @@
 
   function productHtml(r) {
     var p = D.products[r.id];
-    var name = p[0], section = D.sections[p[1]], photo = p[2], sized = p[3], desc = p[4] || D.genericDesc;
+    var name = p[0], section = D.sections[p[1]], photo = p[2], sized = p[3], desc = p[4]; // 0 = the generic placeholder, not shown
     var prices = p[6], character = p[7], family = p[8];
     var size = r.size && prices[r.size] ? r.size : p[5];
     var price = prices[size];
@@ -93,7 +93,7 @@
       '<h1 class="pdp-title">' + esc(name) + "</h1>" +
       (sized ? '<p class="pdp-type">أو دو بارفان</p>' : "") +
       (character ? '<p class="pdp-character">' + esc(character) + "</p>" : "") +
-      '<p class="pdp-desc">' + esc(desc) + "</p>" +
+      (desc ? '<p class="pdp-desc">' + esc(desc) + "</p>" : "") +
       '<div class="buy-box"><p class="pdp-price"><span class="pdp-price-value">' + esc(price || "غير متاح حاليًا") + "</span>" +
       (sized && price ? '<span class="pdp-price-size">لحجم ' + esc(D.sizeLabels[size]) + "</span>" : "") +
       "</p></div></div></div></div></main>";

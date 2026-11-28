@@ -48,7 +48,9 @@ var SCENT_FAMILIES = [
   { id: "musky", title: "مسكي" }
 ];
 
-var GENERIC_DESC = "منتج كيميت من المحل، اسأل عن التفاصيل على واتساب.";
+// Placeholder for products without their own description. Product pages don't
+// show it (the "اسأل عن الريحة" box below covers that); kept for the data.
+var GENERIC_DESC = "منتج من كيميت، اسأل عن التفاصيل على واتساب.";
 
 // A photo = assets/<code>.jpg plus its WebP copies assets/img/<code>-320.webp and -640.webp.
 function photoSet(code) {
@@ -96,14 +98,14 @@ var products = [
   perfume("w-qamar", "women", "قمر ١٤"),
   perfume("w-dalal", "women", "دلال"),
   // بيرفيوم رجالي
-  perfume("kemet-edp", "men", "عطر كيميت", "عطر كيميت الأصلي، من المحل على طول."),
+  perfume("kemet-edp", "men", "عطر كيميت", "عطر كيميت الأصلي."),
   perfume("m-malaki", "men", "ملكي"),
   perfume("m-fares", "men", "فارس"),
   perfume("m-anbar", "men", "عنبر بلاك"),
   perfume("m-saqr", "men", "صقر"),
   // لوشن
-  single("l-sunsilk", "lotion", "بودي لوشن صن سيلك", { kind: "lotion", accent: "#f2d878" }, "بودي لوشن كيميت، من المحل على طول."),
-  single("l-vanilla", "lotion", "بودي لوشن دارك فانيليا", { kind: "lotion", accent: "#a8842e" }, "بودي لوشن كيميت، من المحل على طول."),
+  single("l-sunsilk", "lotion", "بودي لوشن صن سيلك", { kind: "lotion", accent: "#f2d878" }),
+  single("l-vanilla", "lotion", "بودي لوشن دارك فانيليا", { kind: "lotion", accent: "#a8842e" }),
   single("l-rose", "lotion", "بودي لوشن روز", { kind: "lotion", accent: "#e6c765" }),
   single("l-luna", "lotion", "بودي لوشن لونا", { kind: "lotion", accent: "#c9a227" }),
   single("l-coco", "lotion", "بودي لوشن كوكو", { kind: "lotion", accent: "#8a6a2a" }),

@@ -144,7 +144,7 @@ export async function buildShell(root) {
   for (const s of A.SECTIONS) sections[s.id] = [s.title, countLabel(A.productsIn(s.id).length)];
   const data = {
     products, sections, sizeLabels, total: countLabel(A.products.length),
-    genericDesc: A.GENERIC_DESC, artBg: A.ART_BG,
+    artBg: A.ART_BG,
   };
   const head = { hero: { mobile: A.HERO_PHOTO.mobile, desktop: A.HERO_PHOTO.desktop }, photos: {} };
   for (const p of A.products) if (p.photo) head.photos[p.id] = [p.photo.w320, p.photo.w640];
