@@ -7,24 +7,26 @@ function PageHeading(props) {
 }
 
 // ---------------- Home ----------------
-// A list's price, said once above it instead of on every card: "الأسعار من ٢٠٠ جنيه"
-// when all are perfumes, "١٠٠ جنيه للقطعة" when all share one price. Mixed lists
-// (a search across sections) return null, and their cards keep their own price.
+// A list's price, said once above it instead of on every card, when every item
+// starts at the same price: "الأسعار من ٢٥٠ جنيه" for perfumes of one tier, "١٠٠ جنيه
+// للقطعة" for the rest. Lists that mix tiers or sections return null, and each card
+// shows its own price.
 function groupPriceLine(items) {
   var buyable = items.filter(function (p) { return p.available !== false; });
   if (!buyable.length) return null;
   if (buyable.every(function (p) { return p.sized; })) {
-    var lo = Math.min.apply(null, buyable.map(fromPrice));
+    var lo = fromPrice(buyable[0]);
+    if (!buyable.every(function (p) { return fromPrice(p) === lo; })) return null;
     return "الأسعار من " + money(lo, lo);
   }
-  if (buyable.every(function (p) { return !p.sized; })) return priceLabel("std") + " للقطعة";
+  if (buyable.every(function (p) { return !p.sized; })) return money(STD_PRICE, STD_PRICE) + " للقطعة";
   return null;
 }
-// The three sizes side by side, each bottle drawn at its real relative size
-// (height follows the cube root of the volume), with its price. The size with
-// the lowest price per ml gets a "best value" tag.
+// The three sizes side by side, each bottle shown at its real relative size
+// (height follows the cube root of the volume), with its price in both tiers. The
+// size with the lowest basic price per ml gets a "best value" tag.
 function SizeShelf() {
-  var perMl = function (s) { return priceRange(s.key, 1).hi / s.ml; };
+  var perMl = function (s) { return PRICE_TIERS.basic[s.key] / s.ml; };
   var best = PERFUME_SIZES.reduce(function (a, b) { return perMl(b) < perMl(a) ? b : a; }).key;
   return h("div", { className: "size-shelf" },
     h("p", { className: "size-shelf-title", id: "size-shelf-title" }, "كل عطر بـ٣ أحجام"),
@@ -32,8 +34,9 @@ function SizeShelf() {
       return h("li", { key: s.key, className: "size-shelf-item" + (s.key === best ? " is-best" : "") },
         h("span", { className: "size-shelf-slot" }, h(SizeBottle, { height: Math.round(84 * Math.cbrt(s.ml / 100)) })),
         h("b", { className: "size-shelf-ml" }, s.label),
-        h("span", { className: "size-shelf-price" }, priceLabel(s.key)),
-        s.key === best && h("span", { className: "size-shelf-tag", title: perMlLabel(s.key) }, "الأوفر"));
+        h("span", { className: "size-shelf-price" }, money(PRICE_TIERS.basic[s.key], PRICE_TIERS.basic[s.key])),
+        h("span", { className: "size-shelf-legend" }, PRICE_TIERS.legend.title + " " + money(PRICE_TIERS.legend[s.key], PRICE_TIERS.legend[s.key])),
+        s.key === best && h("span", { className: "size-shelf-tag" }, "الأوفر"));
     })));
 }
 function HomePage() {
@@ -62,7 +65,7 @@ function HomePage() {
         h("div", { className: "hero-copy" },
           h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
           h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
-          h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
+          h("p", { className: "lede" }, "من «نفرتيتي» لـ«حورس»: عطور حريمي ورجالي وللجنسين بأسامي مصرية وعربية. اختار اللي يشبهك، واطلبه على واتساب."),
           h("div", { className: "btn-row" },
             h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
             h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
@@ -75,7 +78,7 @@ function HomePage() {
         h("div", null, h("h2", { id: "featured-title" }, "عطور كيميت")),
         h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
       h("div", { className: "entry-tiles" },
-        ["women", "men"].map(function (id) {
+        ["women", "men", "unisex"].map(function (id) {
           var s = sectionById(id);
           var first = productsIn(id)[0];
           return h(Link, { key: id, to: collectionHash(id), className: "entry-tile" },
@@ -85,7 +88,7 @@ function HomePage() {
               h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور")),
             h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
         })),
-      h(ProductGrid, { items: featured, columns: 4, hidePrice: true })),
+      h(ProductGrid, { items: featured, columns: 4 })),
 
     h("section", { className: "wrap section", "aria-labelledby": "more-title", "data-reveal": "" },
       h("h2", { id: "more-title" }, "كمان في كيميت"),
@@ -187,7 +190,7 @@ function CollectionPage(props) {
     if (section && p.section !== section.id) return false;
     if (family && p.family !== family) return false;
     if (nq && !(normalizeAr(p.name).includes(nq) || normalizeAr(sectionTitle(p.section)).includes(nq) ||
-      (p.character && normalizeAr(p.character).includes(nq)))) return false;
+      (p.character && normalizeAr(p.character).includes(nq)) || (tierTitle(p) && normalizeAr(tierTitle(p)).includes(nq)))) return false;
     return true;
   });
   var filtered = !!(section || family || nq);
@@ -257,7 +260,7 @@ function CollectionPage(props) {
     body = h(Fragment, null,
       groupPriceLine(results) && h("p", { className: "section-sub" }, groupPriceLine(results)),
       section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section, hidePrice: !!groupPriceLine(results) }),
-      section && (section.id === "women" || section.id === "men") && h(MatchBox, null));
+      section && (section.id === "women" || section.id === "men" || section.id === "unisex") && h(MatchBox, null));
   }
 
   return h("main", { id: "main", className: "collection" },
@@ -273,7 +276,7 @@ function CollectionPage(props) {
             h(Icon, { name: "search", size: 20 }),
             h("input", {
               id: searchId, type: "search", value: q, enterKeyHint: "search", autoComplete: "off",
-              placeholder: "مثلاً: نفرتاري، مسك، لوشن",
+              placeholder: "مثلاً: حورس، أسطوري، مسك",
               onChange: function (e) { setQuery(e.target.value); }
             }),
             q && h("button", { type: "button", className: "icon-btn search-clear", onClick: function () { setQuery(""); }, "aria-label": "امسح البحث" }, h(Icon, { name: "close", size: 18 })))),
@@ -391,7 +394,7 @@ function ProductPage(props) {
   var section = sectionById(p.section);
   var fam = p.family ? familyById(p.family) : null;
   var canBuy = isSizeAvailable(p, size);
-  var r = priceRange(size, qty);
+  var r = priceRange(p, size, qty);
   var related = productsIn(p.section).filter(function (x) { return x.id !== p.id; }).slice(0, 4);
   var chooseSize = function (k) {
     setSize(k);
@@ -410,7 +413,8 @@ function ProductPage(props) {
       h("div", { className: "pdp-grid" },
         h("div", { className: "pdp-media" }, h("div", { className: "pdp-frame" }, h(ProductImage, { product: p, size: "large", priority: true, alt: photoAlt(p) }))),
         h("div", { className: "pdp-info" },
-          h("p", { className: "card-kicker" }, section.title, fam ? " · " + fam.title : ""),
+          h("p", { className: "card-kicker" }, section.title, fam ? " · " + fam.title : "",
+            p.tier === "legend" && h("span", { className: "tier-badge" }, tierTitle(p))),
           h(PageHeading, { className: "pdp-title" }, p.name),
           p.sized && h("p", { className: "pdp-type" }, "أو دو بارفان"),
           p.character && h("p", { className: "pdp-character" }, p.character),
@@ -418,7 +422,7 @@ function ProductPage(props) {
 
           h("div", { className: "buy-box" },
             h("p", { className: "pdp-price", "aria-live": "polite" },
-              h("span", { className: "pdp-price-value" }, canBuy ? priceLabel(size) : "غير متاح حاليًا"),
+              h("span", { className: "pdp-price-value" }, canBuy ? priceLabel(p, size) : "غير متاح حاليًا"),
               p.sized && canBuy && h("span", { className: "pdp-price-size" }, "لحجم " + sizeInfo(size).label)),
             p.sized && h(SizePicker, { product: p, value: size, onChange: chooseSize }),
             canBuy

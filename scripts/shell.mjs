@@ -90,7 +90,7 @@ async function loadApp(root) {
   const files = ["runtime.js", "catalog.js", "lib.js", "analytics.js", "art.js", "components.js", "pages.js"];
   let code = "";
   for (const f of files) code += (await read("src/" + f)) + "\n";
-  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, ANALYTICS, SITE_URL, SHOP_ADDRESS, SHOP_MAPS_URL, WA_NUMBER, SIZE_PRICES, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
+  code += ";globalThis.__app = { h, Header, HomePage, Breadcrumbs, products, SECTIONS, SCENT_FAMILIES, ANALYTICS, SITE_URL, SHOP_ADDRESS, SHOP_MAPS_URL, WA_NUMBER, PRICE_TIERS, STD_PRICE, PERFUME_SIZES, GENERIC_DESC, HERO_PHOTO, ART_BG, priceLabel, sizeInfo, sizeKeys, isSizeAvailable, defaultSize, photoAlt, toAr, productsIn };";
   vm.runInContext(code, sandbox);
   return sandbox.__app;
 }
@@ -126,7 +126,7 @@ export async function buildShell(root) {
   const products = {};
   for (const p of A.products) {
     const prices = {};
-    for (const k of A.sizeKeys(p)) if (A.isSizeAvailable(p, k)) prices[k] = A.priceLabel(k);
+    for (const k of A.sizeKeys(p)) if (A.isSizeAvailable(p, k)) prices[k] = A.priceLabel(p, k);
     products[p.id] = [
       p.name,
       p.section,
@@ -155,7 +155,7 @@ export async function buildShell(root) {
     : "";
   // Shop details for search engines (schema.org Store), from the catalog values.
   const latin = (s) => s.replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d));
-  const prices = Object.values(A.SIZE_PRICES).flatMap((p) => [p.value, p.max ?? p.value]);
+  const prices = [A.STD_PRICE].concat(...Object.values(A.PRICE_TIERS).map((t) => A.PERFUME_SIZES.map((s) => t[s.key])));
   const store = {
     "@context": "https://schema.org",
     "@type": "Store",

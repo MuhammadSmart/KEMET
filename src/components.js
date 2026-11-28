@@ -70,6 +70,7 @@ var NAV_LINKS = [
   { to: "#/collection", label: "كل المنتجات", match: function (r) { return r.name === "collection" && !r.section; } },
   { to: "#/collection/women", label: "عطور حريمي", match: function (r) { return r.name === "collection" && r.section === "women"; } },
   { to: "#/collection/men", label: "عطور رجالي", match: function (r) { return r.name === "collection" && r.section === "men"; } },
+  { to: "#/collection/unisex", label: "للجنسين", match: function (r) { return r.name === "collection" && r.section === "unisex"; } },
   { to: "#/?s=story", label: "حكايتنا", match: function () { return false; } },
   { to: "#/?s=order", label: "إزاي تطلب", match: function () { return false; } }
 ];
@@ -195,7 +196,7 @@ function BasketDrawer(props) {
             h("div", { className: "basket-thumb" }, h(ProductImage, { product: p, size: "thumb", alt: "" })),
             h("div", { className: "basket-line-main" },
               h(Link, { to: productHash(p.id), className: "basket-line-name", onClick: close }, p.name),
-              h("p", { className: "basket-line-meta" }, p.sized ? sizeInfo(e.size).label + " · " : "", priceLabel(e.size), " للقطعة"),
+              h("p", { className: "basket-line-meta" }, p.sized ? sizeInfo(e.size).label + " · " : "", priceLabel(p, e.size), " للقطعة"),
               !e.available && h("p", { className: "basket-line-warn", role: "note" }, "غير متاح حاليًا، مش هيتبعت في الطلب."),
               h("div", { className: "basket-line-row" },
                 h(QtyStepper, { value: e.q, min: 1, label: "كمية " + e.unit, itemName: e.unit, onChange: function (n) { shop.setQty(e.key, n); } }),
@@ -264,13 +265,14 @@ function ProductCard(props) {
   var kicker = fam ? fam.title : (props.hideSection ? null : sectionById(p.section).short);
   var allSizes = p.sized && PERFUME_SIZES.every(function (s) { return isSizeAvailable(p, s.key); });
   return h("article", { className: "card" + (unavailable ? " is-unavailable" : "") },
-    h("div", { className: "card-media" }, h(ProductImage, { product: p, alt: "" })),
+    h("div", { className: "card-media" }, h(ProductImage, { product: p, alt: "" }),
+      p.tier === "legend" && h("span", { className: "tier-badge tier-badge-media" }, tierTitle(p))),
     h("div", { className: "card-body" },
       kicker && h("p", { className: "card-kicker" }, kicker),
       h(Heading, { className: "card-title" }, h(Link, { to: productHash(p.id), className: "stretched" }, p.name)),
       p.character && h("p", { className: "card-character" }, p.character),
       p.sized && !allSizes && !unavailable && h("p", { className: "card-sizes" }, "متاح " + sizesSummary(p)),
-      (!props.hidePrice || unavailable) && h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel("std"))),
+      (!props.hidePrice || unavailable) && h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel(p, "std"))),
       !p.sized && !unavailable && h("button", {
         type: "button", className: "btn btn-quiet btn-small card-add",
         onClick: function () { shop.add(p, "std", 1); },
@@ -295,12 +297,11 @@ function SizePicker(props) {
       return h("label", { key: s.key, className: "size-option" + (checked ? " is-checked" : "") + (avail ? "" : " is-disabled") },
         h("input", {
           type: "radio", name: name, value: s.key, checked: checked, disabled: !avail,
-          "aria-label": s.label + "، " + (avail ? priceLabel(s.key) : "غير متاح حاليًا"),
+          "aria-label": s.label + "، " + (avail ? priceLabel(p, s.key) : "غير متاح حاليًا"),
           onChange: function () { props.onChange(s.key); }
         }),
         h("span", { className: "size-ml" }, s.label),
-        h("span", { className: "size-price" }, avail ? priceLabel(s.key) : "غير متاح حاليًا"),
-        avail && h("span", { className: "size-per" }, "≈ " + perMlLabel(s.key)),
+        h("span", { className: "size-price" }, avail ? priceLabel(p, s.key) : "غير متاح حاليًا"),
         checked && h(Icon, { name: "check", size: 18, className: "size-check" }));
     })));
 }

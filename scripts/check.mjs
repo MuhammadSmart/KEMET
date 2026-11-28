@@ -37,7 +37,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
-  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, SCENT_MATCH, matchPerfume, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, SCENT_MATCH, matchPerfume, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, PRICE_TIERS, STD_PRICE, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, priceLabel, fromPrice, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -69,7 +69,7 @@ await test("first-paint shell routes and breadcrumbs match the app", () => {
   assert.equal(S.crumbs([{ to: "#/", label: "الرئيسية" }, { label: "X" }]), shellBuild.crumbSample);
   const kind = (r) => (r.name === "product" && !K.products.some((p) => p.id === r.id) ? "notfound" : r.name);
   for (const hash of ["", "#/", "#/?s=story", "#/collection", "#/collection/men", "#/collection/nope", "#/collection?q=x",
-    "#/p/w-hams", "#/p/w-hams?size=s30", "#/p/nope", "#sec-lotion", "#sec-nope", "#/whatever"]) {
+    "#/p/horus", "#/p/horus?size=s30", "#/p/w-hams", "#/p/nope", "#/collection/unisex", "#sec-lotion", "#sec-nope", "#/whatever"]) {
     const shell = S.parse(hash).name;
     assert.equal(shell === "other" ? "notfound" : shell, kind(K.parseRoute(hash)), `shell and app disagree on "${hash}"`);
   }
@@ -98,7 +98,7 @@ await test("site icons, manifest and shop details for search engines are valid",
   assert.ok(ld.address.streetAddress && !/[٠-٩]/.test(ld.address.streetAddress), "address digits should be 0-9");
 });
 
-await test("catalog matches the original site (IDs, names, sections, sizes, prices; descriptions may be edited)", async () => {
+await test("non-perfume products, sizes and sections match the original site (perfumes come from the shop's stock list)", async () => {
   let legacy;
   try {
     legacy = execFileSync("git", ["show", "413e16e:main.js"], { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
@@ -114,27 +114,30 @@ await test("catalog matches the original site (IDs, names, sections, sizes, pric
   vm.runInContext(stubs + legacy.slice(start, end) + "\n;globalThis.__l = { products, SIZE_PRICES, PERFUME_SIZES, SECTIONS, WA_NUMBER };", box);
   const L = box.__l;
   // Descriptions are shop copy the owner rewrites (e.g. "من المحل" dropped), so they aren't compared.
-  const strip = (arr) => arr.map((p) => ({ id: p.id, section: p.section, name: p.name, sized: p.sized }));
+  const strip = (arr) => arr.filter((p) => !p.sized).map((p) => ({ id: p.id, section: p.section, name: p.name }));
   assert.deepEqual(JSON.parse(JSON.stringify(strip(K.products))), JSON.parse(JSON.stringify(strip(L.products))));
-  assert.deepEqual(JSON.parse(JSON.stringify(K.SIZE_PRICES)), JSON.parse(JSON.stringify(L.SIZE_PRICES)));
+  assert.equal(K.STD_PRICE, L.SIZE_PRICES.std.value);
   assert.deepEqual(JSON.parse(JSON.stringify(K.PERFUME_SIZES)), JSON.parse(JSON.stringify(L.PERFUME_SIZES)));
-  assert.equal(JSON.stringify(K.SECTIONS.map((s) => [s.id, s.title])), JSON.stringify(L.SECTIONS.map((s) => [s.id, s.title])));
+  // The original sections, in order; "للجنسين" was added for the new stock.
+  const added = ["unisex"];
+  assert.equal(JSON.stringify(K.SECTIONS.filter((s) => !added.includes(s.id)).map((s) => [s.id, s.title])), JSON.stringify(L.SECTIONS.map((s) => [s.id, s.title])));
   assert.equal(K.WA_NUMBER, L.WA_NUMBER);
 });
 
 await test("WhatsApp order message keeps the original format", () => {
-  const msg = K.orderMessage(K.basketEntries({ "w-hams:s50": 2, "ms-white:std": 1 }));
+  const msg = K.orderMessage(K.basketEntries({ "horus:s50": 2, "rotab:s30": 1, "ms-white:std": 1 }));
   assert.equal(msg, [
     "أهلاً، عايز أطلب من كيميت:",
-    "• همس الليل ٥٠ مل × ٢ = ٧٠٠ - ٨٠٠ جنيه",
+    "• حورس ٥٠ مل × ٢ = ١٠٠٠ جنيه",
+    "• رطب ٣٠ مل × ١ = ٢٥٠ جنيه",
     "• مسك أبيض × ١ = ١٠٠ جنيه",
-    "الإجمالي: ٨٠٠ - ٩٠٠ جنيه",
+    "الإجمالي: ١٣٥٠ جنيه",
   ].join("\n"));
 });
 
 await test("basket sanitizer drops unknown products/sizes and clamps quantities", () => {
-  const b = K.sanitizeBasket({ "w-hams:s30": 3, "nope:s30": 1, "w-hams:s75": 1, "ms-white:s50": 1, "l-rose:std": 250, "f-car:std": -2 });
-  assert.deepEqual(JSON.parse(JSON.stringify(b)), { "w-hams:s30": 3, "l-rose:std": 99 });
+  const b = K.sanitizeBasket({ "horus:s30": 3, "nope:s30": 1, "w-hams:s50": 1, "horus:s75": 1, "ms-white:s50": 1, "l-rose:std": 250, "f-car:std": -2 });
+  assert.deepEqual(JSON.parse(JSON.stringify(b)), { "horus:s30": 3, "l-rose:std": 99 });
 });
 
 await test("router handles home, collection, product, legacy anchors and unknown paths", () => {
@@ -166,11 +169,13 @@ await test("scent profiles: known products, accords and families, every note exp
   for (const [id, prof] of Object.entries(K.SCENT_PROFILES)) {
     assert.ok(K.products.some((p) => p.id === id), `${id}: no such product`);
     assert.ok(families.includes(prof.family), `${id}: unknown family ${prof.family}`);
-    for (const [acc, strength] of prof.accords) {
+    for (const [acc, strength] of prof.accords || []) {
       assert.ok(K.ACCORDS[acc], `${id}: unknown accord ${acc}`);
       assert.ok(strength > 0 && strength <= 100, `${id}: accord strength ${strength}`);
     }
-    const notes = [].concat(prof.notes.top || [], prof.notes.heart || [], prof.notes.base || []);
+    assert.ok(prof.character, `${id}: a profile needs at least a scent line`);
+    const n = prof.notes || {};
+    const notes = [].concat(n.top || [], n.heart || [], n.base || []);
     const missing = notes.filter((n) => !K.NOTE_GLOSSARY[n]);
     assert.deepEqual(missing, [], `${id}: notes without a plain-language description`);
   }
@@ -213,11 +218,19 @@ await test("opening offer: shows until its end date and adds a line to orders", 
   if (K.offerActive()) assert.match(K.offerNote(), /^\n.+خصم ٢٠٪ على كل المنتجات$/);
 });
 
-await test("prices: default size, ranges, per-ml labels", () => {
+await test("prices: two tiers, every perfume in one, default size", () => {
+  assert.deepEqual(JSON.parse(JSON.stringify(K.PRICE_TIERS)), {
+    basic: { title: "أساسي", s30: 250, s50: 350, s100: 650 },
+    legend: { title: "أسطوري", s30: 350, s50: 500, s100: 800 },
+  });
+  for (const p of K.products.filter((x) => x.sized)) assert.ok(K.PRICE_TIERS[p.tier], `${p.id}: no price tier`);
+  const byId = (id) => K.products.find((p) => p.id === id);
+  assert.equal(K.priceLabel(byId("rotab"), "s100"), "٦٥٠ جنيه");
+  assert.equal(K.priceLabel(byId("horus"), "s30"), "٣٥٠ جنيه");
+  assert.equal(K.fromPrice(byId("horus")), 350);
+  assert.equal(K.priceLabel(byId("ms-white"), "std"), "١٠٠ جنيه");
   assert.equal(K.defaultSize(K.products[0]), "s50");
   assert.equal(K.money(350, 400), "٣٥٠ - ٤٠٠ جنيه");
-  assert.equal(K.perMlLabel("s100"), "٥ جنيه للملّي");
-  assert.equal(K.perMlLabel("s50"), "٧ - ٨ جنيه للملّي");
 });
 
 console.log(`\n${passed} passed, ${failures.length} failed${skipped ? `, ${skipped} skipped` : ""}`);

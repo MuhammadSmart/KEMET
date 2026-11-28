@@ -151,29 +151,24 @@ function defaultSize(p) {
   if (isSizeAvailable(p, DEFAULT_SIZE)) return DEFAULT_SIZE;
   return sizeKeys(p).find(function (k) { return isSizeAvailable(p, k); }) || DEFAULT_SIZE;
 }
-function priceRange(key, qty) {
-  var pr = SIZE_PRICES[key];
-  var q = qty == null ? 1 : qty;
-  return { lo: pr.value * q, hi: (pr.max != null ? pr.max : pr.value) * q };
+// Price of one piece: perfumes by their tier and size (PRICE_TIERS), the rest STD_PRICE.
+function unitPrice(p, key) {
+  return p.sized ? PRICE_TIERS[p.tier][key] : STD_PRICE;
 }
-function priceLabel(key) {
-  var r = priceRange(key, 1);
-  return money(r.lo, r.hi);
+// { lo, hi } so basket totals can still carry a range; every price is exact today.
+function priceRange(p, key, qty) {
+  var v = unitPrice(p, key) * (qty == null ? 1 : qty);
+  return { lo: v, hi: v };
+}
+function priceLabel(p, key) {
+  return money(unitPrice(p, key), unitPrice(p, key));
 }
 // Lowest price across a product's sizes, for "from" labels on cards.
 function fromPrice(p) {
-  var lows = sizeKeys(p).map(function (k) { return SIZE_PRICES[k].value; });
-  return Math.min.apply(null, lows);
+  return Math.min.apply(null, sizeKeys(p).map(function (k) { return unitPrice(p, k); }));
 }
-// Price per ml, e.g. "≈ ٥ جنيه للملّي" (rounded to whole pounds where possible).
-function perMlLabel(key) {
-  var info = sizeInfo(key);
-  if (!info) return "";
-  var r = priceRange(key, 1);
-  var lo = r.lo / info.ml;
-  var hi = r.hi / info.ml;
-  var fmt = function (x) { return toAr(Math.round(x * 10) / 10).replace(".", "٫"); };
-  return lo === hi ? fmt(lo) + " جنيه للملّي" : fmt(lo) + " - " + fmt(hi) + " جنيه للملّي";
+function tierTitle(p) {
+  return p.sized && PRICE_TIERS[p.tier] ? PRICE_TIERS[p.tier].title : null;
 }
 function unitName(p, key) {
   if (!p.sized) return p.name;
@@ -251,7 +246,7 @@ function basketEntries(basket) {
     sizeKeys(p).forEach(function (key) {
       var q = basket[p.id + ":" + key] || 0;
       if (q > 0) {
-        var r = priceRange(key, q);
+        var r = priceRange(p, key, q);
         entries.push({
           key: p.id + ":" + key, product: p, size: key, q: q,
           unit: unitName(p, key), lo: r.lo, hi: r.hi,
