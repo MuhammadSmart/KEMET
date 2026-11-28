@@ -352,3 +352,9 @@
 @media (prefers-reduced-motion: reduce) { .match-result { animation: none; } }
 .search-match { display: grid; gap: var(--space-4); padding: var(--space-6) 0; max-width: 980px; }
 .search-match h2 { font-size: var(--step-2); margin: 0; }
+
+/* Aging line under the hero title: Naskh face and gold so it reads apart from the headline. */
+.hero-aging {
+  font-family: "Noto Naskh Arabic", "Geeza Pro", var(--font-ar); font-size: var(--step-1); font-weight: 500;
+  color: var(--gold-ink); line-height: 1.7; margin-top: calc(-1 * var(--space-2)); text-wrap: balance;
+}
