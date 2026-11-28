@@ -65,6 +65,7 @@ function HomePage() {
         h("div", { className: "hero-copy" },
           h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
           h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
+          h("p", { className: "hero-aging" }, "الوقت أغلى مكوّن في العطر.. وعطورنا بتتعتّق كويس قبل ما توصلك"),
           h("p", { className: "lede" }, "من «نفرتيتي» لـ«حورس»: عطور حريمي ورجالي وللجنسين بأسامي مصرية وعربية. اختار اللي يشبهك، واطلبه على واتساب."),
           h("div", { className: "btn-row" },
             h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
