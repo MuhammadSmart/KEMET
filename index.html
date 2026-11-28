@@ -2,20 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>عطور كيميت — Wear the legend</title>
+<meta name="description" content="عطور كيميت: عطور أو دو بارفان حريمي ورجالي بأحجام ٣٠ و٥٠ و١٠٠ مل من ٢٠٠ جنيه، ولوشن ومسك ومعطرات. اختار عطرك واطلبه على واتساب.">
+<meta name="theme-color" content="#f5efe4">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_EG">
+<meta property="og:site_name" content="عطور كيميت">
+<meta property="og:title" content="عطور كيميت — Wear the legend">
+<meta property="og:description" content="عطور أو دو بارفان بأحجام ٣٠ و٥٠ و١٠٠ مل من ٢٠٠ جنيه. الطلب على واتساب.">
+<meta property="og:image" content="assets/6LDHZZDF.jpg">
+<link rel="preload" as="image" type="image/webp" href="assets/img/hero-mobile-500.webp" media="(max-width: 719px)" fetchpriority="high">
+<link rel="preload" as="image" type="image/webp" href="assets/img/kemet-edp-640.webp" media="(min-width: 720px)" fetchpriority="high">
 <link rel="stylesheet" href="main.css">
-</head>
-<body>
-<div id="root"></div>
 <script>
 // Shim: على الاستضافة الأصلية (Instinct Files) بيتعمل inject لكائن instinctFile.
 // هنا بنوفره يدويًا عشان الصفحة تشتغل على أي استضافة ثابتة.
-window.instinctFile = {
-  initialRoute: '/',
-  route: function () {},
-};
+window.instinctFile = { initialRoute: '/', route: function () {} };
+// The static hero below is only for the homepage's first paint.
+if (location.hash && location.hash !== '#/' && location.hash.indexOf('#/?') !== 0) document.documentElement.className += ' deep-link';
 </script>
-<script src="main.js"></script>
+<style>.deep-link .shell-hero{display:none}.shell-header .brand-text{gap:2px}</style>
+<script src="main.js" defer></script>
+</head>
+<body>
+<div id="root">
+  <!-- First-paint shell (replaced by the app). Keep in sync with Header + HomePage hero in src/. -->
+  <header class="site-header shell-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#/"><span class="brand-text"><span class="brand-latin" lang="en" dir="ltr">KEMET</span><span class="brand-ar">عطور كيميت</span></span></a>
+    </div>
+  </header>
+  <main id="main" class="home shell-hero">
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <div class="hero-media"><div class="hero-arch">
+          <picture>
+            <source media="(max-width: 719px)" type="image/webp" srcset="assets/img/hero-mobile-500.webp">
+            <source type="image/webp" srcset="assets/img/kemet-edp-640.webp">
+            <img src="assets/6LDHZZDF.jpg" width="640" height="800" fetchpriority="high" alt="زجاجة عطر كيميت أو دو بارفان بشعار مفتاح الحياة المجنّح، جنب علبتها السودا بالنقوش الذهبي">
+          </picture>
+        </div></div>
+        <div class="hero-copy">
+          <p class="eyebrow"><span lang="en" dir="ltr">KEMET</span> · عطور كيميت</p>
+          <h1 class="hero-title">خلّي حضورك أسطوري.</h1>
+          <p class="lede">عطور أو دو بارفان حريمي ورجالي من محل كيميت، كل عطر بـ٣ أحجام. اختار ريحتك وحجمك، وابعت طلبك كله في رسالة واتساب واحدة.</p>
+          <div class="btn-row"><a class="btn btn-primary btn-large" href="#/collection">اكتشف العطور</a></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <noscript><p class="wrap">الموقع محتاج JavaScript. تقدر تطلب على طول من <a href="https://wa.me/201154615084">واتساب المحل</a>.</p></noscript>
+</div>
 </body>
 </html>
