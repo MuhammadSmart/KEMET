@@ -6,9 +6,22 @@ to the shop (`wa.me/201154615084`). The site takes no payment.
 
 ## Deploy
 
-Upload these files to any static host, keeping them side by side:
-`index.html`, `main.js`, `main.css`, `assets/`, `fonts/`.
-Opening `index.html` directly from disk also works (the site uses `#/` URLs).
+The site is published with **GitHub Pages** from the `main` branch:
+https://muhammadsmart.github.io/KEMET/
+
+1. On GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**,
+   then pick `main` and `/ (root)`, and save. (Free accounts need a public repo.)
+2. Every push to `main` republishes the site within a minute or two.
+
+`.nojekyll` tells Pages to serve the files as they are.
+
+Any other static host works too: upload `index.html`, `main.js`, `main.css`,
+`assets/` and `fonts/`, keeping them side by side. Opening `index.html` directly
+from disk also works, because the site uses `#/` URLs.
+
+If the address changes (another host or your own domain), update `og:url` and
+`og:image` in `index.html`. WhatsApp and Facebook need that full address to show
+the preview picture when someone shares the link.
 
 ## Preview locally
 
