@@ -45,7 +45,8 @@ node scripts/check.mjs     # build is fresh, catalog, prices, WhatsApp message f
 |---|---|
 | Products, prices, sizes, WhatsApp number, homepage picks | `src/catalog.js` |
 | Scent families, notes and "character" (add them only from the real product sheet) | `src/catalog.js` (optional fields are documented at the top) |
-| Colors, fonts, spacing, radii | `src/styles/tokens.css` (display font: Reem Kufi, SIL OFL, in `fonts/`; the `.woff` is made from the `.ttf` with `node scripts/ttf-to-woff.mjs fonts/ReemKufi-wght.ttf fonts/ReemKufi-wght.woff`) |
+| Colors, fonts, spacing, radii | `src/styles/tokens.css` (headings: El Messiri; the Latin "KEMET": Marcellus; both SIL OFL, licenses in `fonts/`. Each `.woff` is made from its `.ttf` with `node scripts/ttf-to-woff.mjs <in.ttf> <out.woff>`) |
+| Cartouche around the logo, engraved-gold story heading | `src/styles/layout.css` (`.cartouche`), `src/styles/pages.css` (`.story-copy h2`) |
 | What shows before `main.js` loads (first paint) | `src/shell.js` (see below) |
 | Header, menu, footer, drawers, sticky basket bar, breakpoints | `src/styles/layout.css` |
 | Buttons, filter chips, cards, size picker, basket lines, divider | `src/styles/components.css` |

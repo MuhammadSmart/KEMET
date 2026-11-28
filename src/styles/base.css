@@ -23,8 +23,6 @@ img { height: auto; }
 h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
 h1, h2, h3 { line-height: 1.35; font-weight: 600; text-wrap: balance; font-family: var(--font-display); }
 .brand-ar, .card-title, .entry-tile-title, .size-ml { font-family: var(--font-display); }
-/* Reem Kufi has a very narrow space glyph; widen word gaps so Arabic words never run together. */
-h1, h2, h3, .brand-ar, .card-title, .entry-tile-title, .size-ml { word-spacing: 0.22em; }
 h2 { font-size: var(--step-2); }
 h3 { font-size: var(--step-1); }
 ul[role="list"], ol[role="list"] { list-style: none; padding: 0; }

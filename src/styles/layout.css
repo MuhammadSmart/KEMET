@@ -26,10 +26,24 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .brand svg { flex: none; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 .brand-latin {
-  font-family: var(--font-latin-display); letter-spacing: 0.22em; font-weight: 700;
+  font-family: var(--font-latin-display); letter-spacing: 0.22em; font-weight: 400;
   color: var(--gold-ink); font-size: 1.05rem;
 }
 .brand-ar { font-size: 0.8rem; color: var(--ink-2); }
+
+/* Cartouche: the oval ring Egyptian scribes drew around royal names, closed by a
+   bar at the end of the reading direction (on the left, in right-to-left text). */
+.cartouche { display: inline-flex; align-items: center; color: var(--gold); }
+.cartouche-ring {
+  align-items: center; text-align: center;
+  border: 1.5px solid currentColor; border-radius: 999px; padding: 3px 14px 4px;
+}
+.cartouche-ring .brand-latin { margin-inline-start: 0.22em; } /* balance the trailing letter-spacing */
+.cartouche::after {
+  content: ""; flex: none; align-self: stretch; width: 2px; margin-block: 0.45em;
+  margin-inline-start: -1px; background: currentColor; border-radius: 2px;
+}
+.cartouche-light { color: var(--gold-light); }
 .main-nav { display: none; }
 .main-nav ul { display: flex; gap: var(--space-1); list-style: none; padding: 0; margin: 0; }
 .main-nav a {
@@ -122,7 +136,9 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .site-footer { background: var(--cobalt-deep); color: var(--on-cobalt); padding-bottom: calc(var(--space-6) + var(--bar-h)); }
 .site-footer .divider { color: var(--gold-light); opacity: 0.7; }
 .footer-inner { display: grid; gap: var(--space-5); padding-block: var(--space-6); }
-.footer-brand .brand-latin { color: var(--gold-light); margin-top: var(--space-2); }
+.footer-brand { display: grid; gap: var(--space-2); justify-items: start; }
+.footer-brand .brand-latin { color: var(--gold-light); }
+.footer-brand .brand-ar { color: var(--on-cobalt); font-size: 0.95rem; }
 .footer-brand p:last-child { color: var(--on-cobalt-2); }
 .site-footer nav ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-1); }
 .site-footer nav a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: none; }
