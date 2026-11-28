@@ -276,10 +276,14 @@ function perfumePhoto(id) {
   return photoSet(PERFUME_PHOTOS[id] || PHOTO_CODES[photoTurn++ % PHOTO_CODES.length]);
 }
 
+// Homepage photo: the KEMET bottle on black and gold (private/photos/bottle-gold.jpg).
+// Phone = the square photo, desktop and fallback = a 4:5 crop around the bottle.
+// (The Nefertiti tapestry is also ready: assets/nefertiti.jpg, img/nefertiti-500/640.webp.)
 var HERO_PHOTO = {
-  mobile: "./assets/img/hero-mobile-500.webp",
-  desktop: "./assets/img/6LDHZZDF-640.webp",
-  jpg: "./assets/6LDHZZDF.jpg"
+  mobile: "./assets/img/bottle-gold-500.webp",
+  desktop: "./assets/img/bottle-gold-640.webp",
+  jpg: "./assets/bottle-gold.jpg",
+  alt: "زجاجة عطر كيميت ١٠٠ مل على أرضية سودا لامعة، ووراها مفتاح الحياة المجنّح بالدهبي وتماثيل فرعونية"
 };
 
 // The real 100 ml bottle, cut out (from private/photos/KEMET-100mL-4K-transparent.png, 256 px tall).

@@ -52,16 +52,16 @@ function HomePage() {
             h("span", { className: "offer-strip-note" }, "الخصم بيتحسب في الرد على طلبك على واتساب.")))),
       h("div", { className: "wrap hero-inner" },
         h("div", { className: "hero-media" },
-          // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
-          h("div", { className: "hero-cornice", "aria-hidden": "true" }),
+          // A gilded 3D frame (assets/img/frame-gold.webp, rendered by scripts/frame3d.py).
+          h("div", { className: "hero-frame" },
           h("div", { className: "hero-arch" },
             h("picture", null,
               h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),
               h("source", { type: "image/webp", srcSet: HERO_PHOTO.desktop }),
               h("img", {
                 src: HERO_PHOTO.jpg, width: 640, height: 800, fetchpriority: "high", decoding: "async",
-                alt: "زجاجة عطر كيميت أو دو بارفان بشعار مفتاح الحياة المجنّح، جنب علبتها السودا بالنقوش الذهبي"
-              })))),
+                alt: HERO_PHOTO.alt
+              }))))),
         h("div", { className: "hero-copy" },
           h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
           h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),

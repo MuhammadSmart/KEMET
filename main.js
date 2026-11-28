@@ -14543,10 +14543,14 @@ Error generating stack: ` + i.message + `
       return photoSet(PERFUME_PHOTOS[id] || PHOTO_CODES[photoTurn++ % PHOTO_CODES.length]);
     }
     
+    // Homepage photo: the KEMET bottle on black and gold (private/photos/bottle-gold.jpg).
+    // Phone = the square photo, desktop and fallback = a 4:5 crop around the bottle.
+    // (The Nefertiti tapestry is also ready: assets/nefertiti.jpg, img/nefertiti-500/640.webp.)
     var HERO_PHOTO = {
-      mobile: "./assets/img/hero-mobile-500.webp",
-      desktop: "./assets/img/6LDHZZDF-640.webp",
-      jpg: "./assets/6LDHZZDF.jpg"
+      mobile: "./assets/img/bottle-gold-500.webp",
+      desktop: "./assets/img/bottle-gold-640.webp",
+      jpg: "./assets/bottle-gold.jpg",
+      alt: "زجاجة عطر كيميت ١٠٠ مل على أرضية سودا لامعة، ووراها مفتاح الحياة المجنّح بالدهبي وتماثيل فرعونية"
     };
     
     // The real 100 ml bottle, cut out (from private/photos/KEMET-100mL-4K-transparent.png, 256 px tall).
@@ -16323,16 +16327,16 @@ Error generating stack: ` + i.message + `
                 h("span", { className: "offer-strip-note" }, "الخصم بيتحسب في الرد على طلبك على واتساب.")))),
           h("div", { className: "wrap hero-inner" },
             h("div", { className: "hero-media" },
-              // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
-              h("div", { className: "hero-cornice", "aria-hidden": "true" }),
+              // A gilded 3D frame (assets/img/frame-gold.webp, rendered by scripts/frame3d.py).
+              h("div", { className: "hero-frame" },
               h("div", { className: "hero-arch" },
                 h("picture", null,
                   h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),
                   h("source", { type: "image/webp", srcSet: HERO_PHOTO.desktop }),
                   h("img", {
                     src: HERO_PHOTO.jpg, width: 640, height: 800, fetchpriority: "high", decoding: "async",
-                    alt: "زجاجة عطر كيميت أو دو بارفان بشعار مفتاح الحياة المجنّح، جنب علبتها السودا بالنقوش الذهبي"
-                  })))),
+                    alt: HERO_PHOTO.alt
+                  }))))),
             h("div", { className: "hero-copy" },
               h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
               h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
