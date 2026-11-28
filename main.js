@@ -14317,30 +14317,34 @@ Error generating stack: ` + i.message + `
     
     var GENERIC_DESC = "منتج كيميت من المحل، اسأل عن التفاصيل على واتساب.";
     
-    function photoSet(id, legacyJpg) {
+    // A photo = assets/<code>.jpg plus its WebP copies assets/img/<code>-320.webp and -640.webp.
+    function photoSet(code) {
       return {
-        w320: "./assets/img/" + id + "-320.webp",
-        w640: "./assets/img/" + id + "-640.webp",
-        jpg: "./assets/" + legacyJpg + ".jpg"
+        w320: "./assets/img/" + code + "-320.webp",
+        w640: "./assets/img/" + code + "-640.webp",
+        jpg: "./assets/" + code + ".jpg"
       };
     }
     
+    // Which photo each perfume shows. All ten photos show the same bottle with a
+    // different Pharaonic piece beside it, so each perfume gets the piece that fits
+    // its name. Temporary until the new shoot (one photo per perfume).
     var PERFUME_PHOTOS = {
-      "w-hams": photoSet("w-hams", "AIGQQVZY"),
-      "w-nefertari": photoSet("w-nefertari", "WSJWFZYL"),
-      "w-lotus": photoSet("w-lotus", "6AIGJKZ2"),
-      "w-qamar": photoSet("w-qamar", "IGZKQG2K"),
-      "w-dalal": photoSet("w-dalal", "IKSPV5TU"),
-      "kemet-edp": photoSet("kemet-edp", "6LDHZZDF"),
-      "m-malaki": photoSet("m-malaki", "3S6CFY2F"),
-      "m-fares": photoSet("m-fares", "XVYQC4Q3"),
-      "m-anbar": photoSet("m-anbar", "P5GJTFHN"),
-      "m-saqr": photoSet("m-saqr", "UPLPPC2X")
+      "w-hams": photoSet("AIGQQVZY"),      // winged scarab
+      "w-nefertari": photoSet("XVYQC4Q3"), // cobra: the uraeus on royal crowns
+      "w-lotus": photoSet("IKSPV5TU"),     // pyramids
+      "w-qamar": photoSet("3S6CFY2F"),     // Eye of Horus: the left eye stood for the moon
+      "w-dalal": photoSet("UPLPPC2X"),     // obelisk
+      "kemet-edp": photoSet("6LDHZZDF"),   // jackal-headed figure (also the homepage photo)
+      "m-malaki": photoSet("WSJWFZYL"),    // Tutankhamun's mask: royal
+      "m-fares": photoSet("IGZKQG2K"),     // sphinx: strength and guard
+      "m-anbar": photoSet("P5GJTFHN"),     // jackal-headed canopic jar, dark tones
+      "m-saqr": photoSet("6AIGJKZ2")       // Horus as a falcon
     };
     
     var HERO_PHOTO = {
       mobile: "./assets/img/hero-mobile-500.webp",
-      desktop: "./assets/img/kemet-edp-640.webp",
+      desktop: "./assets/img/6LDHZZDF-640.webp",
       jpg: "./assets/6LDHZZDF.jpg"
     };
     
@@ -15310,8 +15314,7 @@ Error generating stack: ` + i.message + `
             h("p", null, "للطلب والاستفسار"),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
             h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
-        h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل.",
-          analyticsOn() && " بنعدّ الزيارات من غير كوكيز ومن غير أي بيانات شخصية، عشان نحسّن الموقع."));
+        h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
     }
     
     var ErrorBoundary = (function () {
@@ -15346,6 +15349,13 @@ Error generating stack: ` + i.message + `
     }
     
     // ---------------- Home ----------------
+    // "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي." counted from the catalog, so it stays
+    // right as perfumes are added. Arabic counting: ٣–١٠ عطور, ١١ and up عطر.
+    function perfumeCountLine() {
+      var women = productsIn("women").length, men = productsIn("men").length, all = women + men;
+      var noun = all >= 3 && all <= 10 ? "عطور" : "عطر";
+      return toAr(all) + " " + noun + " أو دو بارفان: " + toAr(women) + " حريمي و" + toAr(men) + " رجالي.";
+    }
     // The three sizes side by side, each bottle drawn at its real relative size
     // (height follows the cube root of the volume), with its price. The size with
     // the lowest price per ml gets a "best value" tag.
@@ -15383,7 +15393,7 @@ Error generating stack: ` + i.message + `
             h("div", { className: "hero-copy" },
               h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
               h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
-              h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عشر عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
+              h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
               h("div", { className: "btn-row" },
                 h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
                 h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
@@ -15395,7 +15405,7 @@ Error generating stack: ` + i.message + `
           h("div", { className: "section-head" },
             h("div", null,
               h("h2", { id: "featured-title" }, "عطور كيميت"),
-              h("p", { className: "section-sub" }, "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي.")),
+              h("p", { className: "section-sub" }, perfumeCountLine())),
             h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
           h("div", { className: "entry-tiles" },
             ["women", "men"].map(function (id) {

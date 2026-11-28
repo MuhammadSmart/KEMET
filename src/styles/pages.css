@@ -217,10 +217,11 @@
 /* ---- Product page ---- */
 .pdp .breadcrumbs { padding-top: var(--space-2); }
 .pdp-grid { display: grid; gap: var(--space-5); }
+/* Phones: a centred square, small enough that the price and the three size
+   buttons show on the first screen (the photo used to fill the whole width). */
 .pdp-frame {
   aspect-ratio: 1 / 1; overflow: hidden; border-radius: var(--radius-l); background: var(--alabaster-2);
-  border: 1px solid var(--line); margin-inline: calc(var(--gutter) * -1);
-  border-radius: 0;
+  border: 1px solid var(--line); width: min(80%, 320px); margin-inline: auto; margin-top: var(--space-2);
 }
 .pdp-frame img, .pdp-frame svg { width: 100%; height: 100%; object-fit: cover; object-position: 30% 85%; }
 .pdp-frame svg { object-position: 50% 50%; }
@@ -260,7 +261,7 @@
 @media (min-width: 900px) {
   .pdp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-7); align-items: start; }
   .pdp-media { position: sticky; top: calc(var(--header-h) + var(--space-4)); }
-  .pdp-frame { aspect-ratio: 4 / 5; margin-inline: 0; border-radius: var(--radius-l); }
+  .pdp-frame { aspect-ratio: 4 / 5; width: auto; margin: 0; }
   .pdp-frame img { object-position: 50% 50%; }
 }
 

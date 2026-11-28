@@ -50,30 +50,34 @@ var SCENT_FAMILIES = [
 
 var GENERIC_DESC = "منتج كيميت من المحل، اسأل عن التفاصيل على واتساب.";
 
-function photoSet(id, legacyJpg) {
+// A photo = assets/<code>.jpg plus its WebP copies assets/img/<code>-320.webp and -640.webp.
+function photoSet(code) {
   return {
-    w320: "./assets/img/" + id + "-320.webp",
-    w640: "./assets/img/" + id + "-640.webp",
-    jpg: "./assets/" + legacyJpg + ".jpg"
+    w320: "./assets/img/" + code + "-320.webp",
+    w640: "./assets/img/" + code + "-640.webp",
+    jpg: "./assets/" + code + ".jpg"
   };
 }
 
+// Which photo each perfume shows. All ten photos show the same bottle with a
+// different Pharaonic piece beside it, so each perfume gets the piece that fits
+// its name. Temporary until the new shoot (one photo per perfume).
 var PERFUME_PHOTOS = {
-  "w-hams": photoSet("w-hams", "AIGQQVZY"),
-  "w-nefertari": photoSet("w-nefertari", "WSJWFZYL"),
-  "w-lotus": photoSet("w-lotus", "6AIGJKZ2"),
-  "w-qamar": photoSet("w-qamar", "IGZKQG2K"),
-  "w-dalal": photoSet("w-dalal", "IKSPV5TU"),
-  "kemet-edp": photoSet("kemet-edp", "6LDHZZDF"),
-  "m-malaki": photoSet("m-malaki", "3S6CFY2F"),
-  "m-fares": photoSet("m-fares", "XVYQC4Q3"),
-  "m-anbar": photoSet("m-anbar", "P5GJTFHN"),
-  "m-saqr": photoSet("m-saqr", "UPLPPC2X")
+  "w-hams": photoSet("AIGQQVZY"),      // winged scarab
+  "w-nefertari": photoSet("XVYQC4Q3"), // cobra: the uraeus on royal crowns
+  "w-lotus": photoSet("IKSPV5TU"),     // pyramids
+  "w-qamar": photoSet("3S6CFY2F"),     // Eye of Horus: the left eye stood for the moon
+  "w-dalal": photoSet("UPLPPC2X"),     // obelisk
+  "kemet-edp": photoSet("6LDHZZDF"),   // jackal-headed figure (also the homepage photo)
+  "m-malaki": photoSet("WSJWFZYL"),    // Tutankhamun's mask: royal
+  "m-fares": photoSet("IGZKQG2K"),     // sphinx: strength and guard
+  "m-anbar": photoSet("P5GJTFHN"),     // jackal-headed canopic jar, dark tones
+  "m-saqr": photoSet("6AIGJKZ2")       // Horus as a falcon
 };
 
 var HERO_PHOTO = {
   mobile: "./assets/img/hero-mobile-500.webp",
-  desktop: "./assets/img/kemet-edp-640.webp",
+  desktop: "./assets/img/6LDHZZDF-640.webp",
   jpg: "./assets/6LDHZZDF.jpg"
 };
 

@@ -7,6 +7,13 @@ function PageHeading(props) {
 }
 
 // ---------------- Home ----------------
+// "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي." counted from the catalog, so it stays
+// right as perfumes are added. Arabic counting: ٣–١٠ عطور, ١١ and up عطر.
+function perfumeCountLine() {
+  var women = productsIn("women").length, men = productsIn("men").length, all = women + men;
+  var noun = all >= 3 && all <= 10 ? "عطور" : "عطر";
+  return toAr(all) + " " + noun + " أو دو بارفان: " + toAr(women) + " حريمي و" + toAr(men) + " رجالي.";
+}
 // The three sizes side by side, each bottle drawn at its real relative size
 // (height follows the cube root of the volume), with its price. The size with
 // the lowest price per ml gets a "best value" tag.
@@ -44,7 +51,7 @@ function HomePage() {
         h("div", { className: "hero-copy" },
           h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
           h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
-          h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عشر عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
+          h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
           h("div", { className: "btn-row" },
             h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
             h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
@@ -56,7 +63,7 @@ function HomePage() {
       h("div", { className: "section-head" },
         h("div", null,
           h("h2", { id: "featured-title" }, "عطور كيميت"),
-          h("p", { className: "section-sub" }, "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي.")),
+          h("p", { className: "section-sub" }, perfumeCountLine())),
         h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
       h("div", { className: "entry-tiles" },
         ["women", "men"].map(function (id) {

@@ -342,8 +342,7 @@ function Footer() {
         h("p", null, "للطلب والاستفسار"),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
         h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
-    h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل.",
-      analyticsOn() && " بنعدّ الزيارات من غير كوكيز ومن غير أي بيانات شخصية، عشان نحسّن الموقع."));
+    h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
 }
 
 var ErrorBoundary = (function () {
