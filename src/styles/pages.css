@@ -4,18 +4,38 @@
 .eyebrow [lang="en"] { letter-spacing: 0.24em; }
 .eyebrow-light { color: var(--gold-light); }
 
-/* ---- Hero: photo in an arched alabaster niche on a cobalt panel ---- */
-.hero { padding-block: var(--space-4) var(--space-6); }
+/* ---- Hero: photo framed as an Egyptian doorway on a cobalt panel ----
+   Temple doorways are topped by a cavetto cornice (the "Egyptian gorge": a
+   concave lip flaring outward, painted with upright palm fronds) sitting on a
+   torus moulding bound with ribbon. Drawn here with CSS only. */
+.hero { padding-block: var(--space-4) var(--space-6); overflow-x: clip; }
 .hero-inner { display: grid; gap: var(--space-5); }
-.hero-media { position: relative; }
+.hero-media { position: relative; --frame-w: min(88%, 380px); }
+.hero-cornice {
+  position: relative; display: grid; margin-inline: auto; width: calc(var(--frame-w) * 1.1);
+  filter: drop-shadow(0 6px 8px rgba(18, 39, 94, 0.25));
+}
+.hero-cornice::before { /* cavetto: wide at the top lip, curving in toward the door */
+  content: ""; height: clamp(26px, 7vw, 40px);
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+  border-top: 3px solid var(--alabaster-3);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(122, 90, 23, 0.45) 11px 12.5px, transparent 12.5px 23px, rgba(47, 154, 148, 0.45) 23px 24.5px),
+    linear-gradient(180deg, #fffaf0 0%, #f1e8d7 35%, #d8c9ac 100%);
+}
+.hero-cornice::after { /* torus moulding, bound with ribbon */
+  content: ""; height: 8px; margin-inline: 4.5%; border-radius: 4px;
+  background: repeating-linear-gradient(135deg, var(--gold) 0 3px, #f6ebcd 3px 8px);
+  box-shadow: inset 0 -2px 2px rgba(35, 28, 20, 0.25);
+}
 .hero-media::before {
   content: ""; position: absolute; inset: 14% -4% 0; border-radius: var(--radius-l);
   background: radial-gradient(120% 90% at 50% 20%, var(--cobalt) 0%, var(--cobalt-deep) 70%);
 }
 .hero-arch {
-  position: relative; margin-inline: auto; width: min(88%, 380px);
+  position: relative; margin-inline: auto; width: var(--frame-w);
   aspect-ratio: 1 / 1; overflow: hidden;
-  border-radius: 999px 999px var(--radius) var(--radius);
+  border-radius: 2px 2px var(--radius-s) var(--radius-s);
   border: 6px solid var(--alabaster); box-shadow: 0 0 0 1px var(--gold), 0 18px 40px rgba(18, 39, 94, 0.35);
   background: var(--alabaster-2);
 }
@@ -24,15 +44,56 @@
 .hero-title { font-size: var(--step-4); line-height: 1.15; }
 .lede { font-size: var(--step-1); color: var(--ink-2); max-width: 36ch; }
 .hero-copy .btn-row { margin-top: var(--space-2); }
-.hero-facts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); font-size: var(--step--1); margin-top: var(--space-2); }
-.hero-facts li { display: inline-flex; align-items: center; gap: 4px; }
-.hero-facts li + li::before { content: ""; width: 5px; height: 5px; transform: rotate(45deg); background: var(--gold); margin-inline-end: var(--space-3); }
-.hero-facts b { color: var(--ink); }
+/* Size shelf: three bottles at true relative size on an alabaster plinth,
+   like pieces on a museum stand. 2.5D with plain CSS: a top face seen from just
+   above, a veined front face with a gold edge, and a soft shadow under each bottle. */
+.size-shelf { justify-self: stretch; max-width: 26rem; margin-top: var(--space-3); }
+.size-shelf-title { font-size: var(--step--1); font-weight: 700; color: var(--gold-ink); margin-bottom: var(--space-2); }
+.size-shelf-list { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
+.size-shelf-list::before { /* top face */
+  content: ""; position: absolute; inset-inline: 1%; top: 82px; height: 14px;
+  background: linear-gradient(180deg, #fbf6ec, #e6dbc7);
+  clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%);
+}
+.size-shelf-list::after { /* front face */
+  content: ""; position: absolute; inset-inline: 1%; top: 96px; height: 16px;
+  border-top: 1px solid var(--gold); border-radius: 0 0 3px 3px;
+  background:
+    repeating-linear-gradient(112deg, transparent 0 18px, rgba(133, 114, 88, 0.14) 18px 19px, transparent 19px 41px),
+    repeating-linear-gradient(64deg, transparent 0 27px, rgba(255, 255, 255, 0.4) 27px 29px, transparent 29px 55px),
+    linear-gradient(180deg, #e7dbc6, #d2c3a6);
+  box-shadow: 0 14px 18px -12px rgba(35, 28, 20, 0.5);
+}
+.size-shelf-item { position: relative; z-index: 1; display: grid; justify-items: center; align-content: start; gap: 2px; text-align: center; }
+.size-shelf-slot { position: relative; height: 92px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 26px; }
+.size-shelf-slot::after { /* contact shadow on the plinth */
+  content: ""; position: absolute; bottom: -2px; left: 50%; width: 46px; height: 6px; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(35, 28, 20, 0.32), transparent); z-index: -1;
+}
+.size-bottle { position: relative; filter: drop-shadow(-2px 3px 3px rgba(35, 28, 20, 0.12)); }
+@media (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) {
+    .size-bottle { transition: transform 0.35s ease; }
+    .size-shelf-item:hover .size-bottle { transform: translateY(-5px) rotate(-2deg); }
+  }
+  /* The juice rises when you come back to the homepage (see SizeShelf). */
+  .size-shelf.fill .size-juice { transform-box: fill-box; transform-origin: 50% 100%; animation: juice-fill 1.1s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
+  .size-shelf.fill .size-shelf-item:nth-child(2) .size-juice { animation-delay: 0.12s; }
+  .size-shelf.fill .size-shelf-item:nth-child(3) .size-juice { animation-delay: 0.24s; }
+}
+@keyframes juice-fill { from { transform: scaleY(0.04); } }
+.size-shelf-ml { font-family: var(--font-display); font-size: var(--step-1); font-weight: 600; line-height: 1.2; }
+.size-shelf-price { font-size: var(--step--1); color: var(--ink-2); font-weight: 600; }
+.size-shelf-tag {
+  margin-top: 4px; font-size: 0.75rem; font-weight: 700; color: var(--turquoise-ink);
+  border: 1px solid var(--turquoise); border-radius: 999px; padding: 1px 8px; background: var(--turquoise-tint);
+}
 @media (min-width: 720px) {
   .hero { padding-block: var(--space-6); }
   .hero-inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: var(--space-6); }
   .hero-media { order: 2; }
-  .hero-arch { aspect-ratio: 4 / 5; width: min(100%, 440px); }
+  .hero-media { --frame-w: min(100%, 440px); }
+  .hero-arch { aspect-ratio: 4 / 5; }
   .hero-arch img { object-position: 50% 50%; }
 }
 

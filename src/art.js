@@ -183,7 +183,31 @@ var WAVE_PATH = (function () {
 function Divider(props) {
   return h("div", { className: "divider" + (props.tone ? " divider-" + props.tone : ""), "aria-hidden": "true" },
     h("svg", { viewBox: "0 0 1200 16", preserveAspectRatio: "none", focusable: "false" },
-      h("path", { d: WAVE_PATH, fill: "none", stroke: "currentColor", strokeWidth: "1.25", vectorEffect: "non-scaling-stroke" })));
+      h("path", { d: WAVE_PATH, fill: "none", stroke: "currentColor", strokeWidth: "1.25", vectorEffect: "non-scaling-stroke" }),
+      // A second, thinner trail in turquoise, like the parallel glass threads on the bottle.
+      h("path", { className: "divider-trail", d: WAVE_PATH, transform: "translate(0 2.5)", fill: "none", strokeWidth: "0.9", vectorEffect: "non-scaling-stroke" })));
+}
+
+// A KEMET bottle for the size shelf: lacquered cap, clear glass with a highlight,
+// amber juice and the black-and-gold label. The shelf scales it so the three sizes
+// keep their real proportions. Gradient ids are per size so copies don't clash.
+function SizeBottle(props) {
+  var id = props.id || "sb";
+  return h("svg", { viewBox: "0 0 40 64", height: props.height, width: Math.round(props.height * 40 / 64), "aria-hidden": "true", focusable: "false", className: "size-bottle" },
+    h("defs", null,
+      h("linearGradient", { id: id + "-glass", x1: 0, y1: 0, x2: 1, y2: 0 },
+        h("stop", { offset: 0, stopColor: "#fffdf8" }), h("stop", { offset: 0.55, stopColor: "#f3ebdc" }), h("stop", { offset: 1, stopColor: "#e2d5bd" })),
+      h("linearGradient", { id: id + "-juice", x1: 0, y1: 0, x2: 0, y2: 1 },
+        h("stop", { offset: 0, stopColor: "#f2c75e" }), h("stop", { offset: 1, stopColor: "#b97d17" })),
+      h("linearGradient", { id: id + "-cap", x1: 0, y1: 0, x2: 1, y2: 0 },
+        h("stop", { offset: 0, stopColor: "#4b4035" }), h("stop", { offset: 0.4, stopColor: "#231c14" }), h("stop", { offset: 1, stopColor: "#0f0b07" }))),
+    h("rect", { x: 13, y: 1, width: 14, height: 11, rx: 2, fill: "url(#" + id + "-cap)" }),
+    h("rect", { x: 16.5, y: 12, width: 7, height: 5, fill: "#8a7a64" }),
+    h("rect", { x: 3, y: 17, width: 34, height: 46, rx: 8, fill: "url(#" + id + "-glass)", stroke: "#b8913f", strokeWidth: 1.4 }),
+    h("rect", { className: "size-juice", x: 6, y: 26, width: 28, height: 34, rx: 6, fill: "url(#" + id + "-juice)", opacity: 0.88 }),
+    h("rect", { x: 10, y: 36, width: 20, height: 12, rx: 1.5, fill: "#231c14", opacity: 0.9 }),
+    h("rect", { x: 12.5, y: 38.5, width: 15, height: 7, rx: 1, fill: "none", stroke: "#e3c67a", strokeWidth: 0.8 }),
+    h("rect", { x: 7.5, y: 21, width: 3, height: 36, rx: 1.5, fill: "#ffffff", opacity: 0.6 }));
 }
 
 function Lotus(props) {

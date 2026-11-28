@@ -22,6 +22,7 @@ function useBasket() {
   // Counter so the same message (adding the same item twice) is announced again.
   var setNotice = useCallback(function (text) { setNoticeState(function (o) { return { text: text, n: o.n + 1 }; }); }, []);
   useEffect(function () { saveBasket(basket); }, [basket]);
+  useEffect(function () { appMounted = true; }, []);
   // Keep several open tabs in sync.
   useEffect(function () {
     var onStorage = function (e) { if (e.key === BASKET_STORAGE_KEY) setBasket(loadBasket()); };
@@ -101,6 +102,20 @@ function App() {
     }
   }, [route.hash]);
 
+  // Scroll-in motion, once per element: dividers draw themselves (zigzag first,
+  // easing into the wave) and sections marked data-reveal fade up. CSS only
+  // hides them while the "motion" class is on and reduced motion is off.
+  useEffect(function () {
+    if (!("IntersectionObserver" in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
+      });
+    }, { rootMargin: "0px 0px -6% 0px", threshold: 0.12 });
+    document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in)").forEach(function (el) { io.observe(el); });
+    return function () { io.disconnect(); };
+  }, [route.hash]);
+
   var page;
   if (route.name === "home") page = h(HomePage, null);
   else if (route.name === "collection") page = h(CollectionPage, { route: route });
@@ -134,6 +149,7 @@ function scrollToSection(id, smooth) {
 }
 
 if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+if ("IntersectionObserver" in window) document.documentElement.classList.add("motion");
 var rootEl = document.getElementById("root");
 // React replaces the static first-paint shell from index.html on its first commit.
 ReactDOMClient.createRoot(rootEl).render(h(App, null));

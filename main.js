@@ -14597,6 +14597,10 @@ Error generating stack: ` + i.message + `
     
     var ROUTE_EVENT = "kemet:route";
     var navState = { push: false };
+    // True once the app has rendered its first page. The homepage uses it to play the
+    // bottle-fill motion only when you come back to it, never on top of the
+    // first-paint copy that was already showing full bottles.
+    var appMounted = false;
     
     function subscribeRoute(cb) {
       window.addEventListener("hashchange", cb);
@@ -14908,7 +14912,31 @@ Error generating stack: ` + i.message + `
     function Divider(props) {
       return h("div", { className: "divider" + (props.tone ? " divider-" + props.tone : ""), "aria-hidden": "true" },
         h("svg", { viewBox: "0 0 1200 16", preserveAspectRatio: "none", focusable: "false" },
-          h("path", { d: WAVE_PATH, fill: "none", stroke: "currentColor", strokeWidth: "1.25", vectorEffect: "non-scaling-stroke" })));
+          h("path", { d: WAVE_PATH, fill: "none", stroke: "currentColor", strokeWidth: "1.25", vectorEffect: "non-scaling-stroke" }),
+          // A second, thinner trail in turquoise, like the parallel glass threads on the bottle.
+          h("path", { className: "divider-trail", d: WAVE_PATH, transform: "translate(0 2.5)", fill: "none", strokeWidth: "0.9", vectorEffect: "non-scaling-stroke" })));
+    }
+    
+    // A KEMET bottle for the size shelf: lacquered cap, clear glass with a highlight,
+    // amber juice and the black-and-gold label. The shelf scales it so the three sizes
+    // keep their real proportions. Gradient ids are per size so copies don't clash.
+    function SizeBottle(props) {
+      var id = props.id || "sb";
+      return h("svg", { viewBox: "0 0 40 64", height: props.height, width: Math.round(props.height * 40 / 64), "aria-hidden": "true", focusable: "false", className: "size-bottle" },
+        h("defs", null,
+          h("linearGradient", { id: id + "-glass", x1: 0, y1: 0, x2: 1, y2: 0 },
+            h("stop", { offset: 0, stopColor: "#fffdf8" }), h("stop", { offset: 0.55, stopColor: "#f3ebdc" }), h("stop", { offset: 1, stopColor: "#e2d5bd" })),
+          h("linearGradient", { id: id + "-juice", x1: 0, y1: 0, x2: 0, y2: 1 },
+            h("stop", { offset: 0, stopColor: "#f2c75e" }), h("stop", { offset: 1, stopColor: "#b97d17" })),
+          h("linearGradient", { id: id + "-cap", x1: 0, y1: 0, x2: 1, y2: 0 },
+            h("stop", { offset: 0, stopColor: "#4b4035" }), h("stop", { offset: 0.4, stopColor: "#231c14" }), h("stop", { offset: 1, stopColor: "#0f0b07" }))),
+        h("rect", { x: 13, y: 1, width: 14, height: 11, rx: 2, fill: "url(#" + id + "-cap)" }),
+        h("rect", { x: 16.5, y: 12, width: 7, height: 5, fill: "#8a7a64" }),
+        h("rect", { x: 3, y: 17, width: 34, height: 46, rx: 8, fill: "url(#" + id + "-glass)", stroke: "#b8913f", strokeWidth: 1.4 }),
+        h("rect", { className: "size-juice", x: 6, y: 26, width: 28, height: 34, rx: 6, fill: "url(#" + id + "-juice)", opacity: 0.88 }),
+        h("rect", { x: 10, y: 36, width: 20, height: 12, rx: 1.5, fill: "#231c14", opacity: 0.9 }),
+        h("rect", { x: 12.5, y: 38.5, width: 15, height: 7, rx: 1, fill: "none", stroke: "#e3c67a", strokeWidth: 0.8 }),
+        h("rect", { x: 7.5, y: 21, width: 3, height: 36, rx: 1.5, fill: "#ffffff", opacity: 0.6 }));
     }
     
     function Lotus(props) {
@@ -15186,7 +15214,9 @@ Error generating stack: ` + i.message + `
     function sizesSummary(p) {
       if (!p.sized) return null;
       var avail = PERFUME_SIZES.filter(function (s) { return isSizeAvailable(p, s.key); });
-      return avail.map(function (s) { return toAr(s.ml); }).join(" · ") + " مل";
+      // Arabic comma, not a middle dot: "·" next to Arabic-Indic digits reads like the
+      // zero "٠", so "٣٠ · ٥٠" looked like one long number.
+      return avail.map(function (s) { return toAr(s.ml); }).join("، ") + " مل";
     }
     
     function ProductCard(props) {
@@ -15316,6 +15346,23 @@ Error generating stack: ` + i.message + `
     }
     
     // ---------------- Home ----------------
+    // The three sizes side by side, each bottle drawn at its real relative size
+    // (height follows the cube root of the volume), with its price. The size with
+    // the lowest price per ml gets a "best value" tag.
+    function SizeShelf() {
+      var perMl = function (s) { return priceRange(s.key, 1).hi / s.ml; };
+      var best = PERFUME_SIZES.reduce(function (a, b) { return perMl(b) < perMl(a) ? b : a; }).key;
+      var fill = useRef(appMounted).current;
+      return h("div", { className: "size-shelf" + (fill ? " fill" : "") },
+        h("p", { className: "size-shelf-title", id: "size-shelf-title" }, "كل عطر بـ٣ أحجام"),
+        h("ul", { className: "size-shelf-list", role: "list", "aria-labelledby": "size-shelf-title" }, PERFUME_SIZES.map(function (s) {
+          return h("li", { key: s.key, className: "size-shelf-item" + (s.key === best ? " is-best" : "") },
+            h("span", { className: "size-shelf-slot" }, h(SizeBottle, { id: "sb-" + s.key, height: Math.round(84 * Math.cbrt(s.ml / 100)) })),
+            h("b", { className: "size-shelf-ml" }, s.label),
+            h("span", { className: "size-shelf-price" }, priceLabel(s.key)),
+            s.key === best && h("span", { className: "size-shelf-tag", title: perMlLabel(s.key) }, "الأوفر"));
+        })));
+    }
     function HomePage() {
       var featured = FEATURED_IDS.map(productById).filter(Boolean);
       var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });
@@ -15323,6 +15370,8 @@ Error generating stack: ` + i.message + `
         h("section", { className: "hero", "aria-labelledby": "hero-title" },
           h("div", { className: "wrap hero-inner" },
             h("div", { className: "hero-media" },
+              // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
+              h("div", { className: "hero-cornice", "aria-hidden": "true" }),
               h("div", { className: "hero-arch" },
                 h("picture", null,
                   h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),
@@ -15334,18 +15383,15 @@ Error generating stack: ` + i.message + `
             h("div", { className: "hero-copy" },
               h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
               h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
-              h("p", { className: "lede" }, "عطور أو دو بارفان حريمي ورجالي من محل كيميت، كل عطر بـ٣ أحجام. اختار ريحتك وحجمك، وابعت طلبك كله في رسالة واتساب واحدة."),
+              h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عشر عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
               h("div", { className: "btn-row" },
                 h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
                 h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
-              h("ul", { className: "hero-facts", role: "list" },
-                h("li", null, h("b", null, "٣٠ · ٥٠ · ١٠٠"), " مل"),
-                h("li", null, "من ", h("b", null, "٢٠٠"), " جنيه"),
-                h("li", null, "الطلب على ", h("b", null, "واتساب")))))),
+              h(SizeShelf, null)))),
     
         h(Divider, null),
     
-        h("section", { className: "wrap section", "aria-labelledby": "featured-title" },
+        h("section", { className: "wrap section", "aria-labelledby": "featured-title", "data-reveal": "" },
           h("div", { className: "section-head" },
             h("div", null,
               h("h2", { id: "featured-title" }, "عطور كيميت"),
@@ -15364,7 +15410,7 @@ Error generating stack: ` + i.message + `
             })),
           h(ProductGrid, { items: featured, columns: 4 })),
     
-        h("section", { className: "wrap section", "aria-labelledby": "more-title" },
+        h("section", { className: "wrap section", "aria-labelledby": "more-title", "data-reveal": "" },
           h("h2", { id: "more-title" }, "كمان في كيميت"),
           h("ul", { className: "section-links", role: "list" }, others.map(function (s) {
             var n = productsIn(s.id).length;
@@ -15375,7 +15421,7 @@ Error generating stack: ` + i.message + `
           }))),
     
         h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },
-          h("div", { className: "wrap story-inner" },
+          h("div", { className: "wrap story-inner", "data-reveal": "" },
             h("div", { className: "story-mark" }, h(Lotus, { size: 44 })),
             h("div", { className: "story-copy" },
               h("p", { className: "eyebrow eyebrow-light" }, "حكايتنا"),
@@ -15391,7 +15437,7 @@ Error generating stack: ` + i.message + `
                   h("li", null, h("a", { href: "https://forces.si.edu/soils/02_08_03.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Smithsonian — Kemet, the black land")))))),
           h(Divider, { tone: "light" })),
     
-        h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title" },
+        h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title", "data-reveal": "" },
           h("h2", { id: "order-title" }, "إزاي تطلب"),
           h("ol", { className: "steps" },
             h("li", null, h("b", null, "اختار العطر والحجم"), h("span", null, "من صفحة كل عطر هتشوف سعر كل حجم قبل ما تضيفه.")),
@@ -15650,6 +15696,7 @@ Error generating stack: ` + i.message + `
       // Counter so the same message (adding the same item twice) is announced again.
       var setNotice = useCallback(function (text) { setNoticeState(function (o) { return { text: text, n: o.n + 1 }; }); }, []);
       useEffect(function () { saveBasket(basket); }, [basket]);
+      useEffect(function () { appMounted = true; }, []);
       // Keep several open tabs in sync.
       useEffect(function () {
         var onStorage = function (e) { if (e.key === BASKET_STORAGE_KEY) setBasket(loadBasket()); };
@@ -15729,6 +15776,20 @@ Error generating stack: ` + i.message + `
         }
       }, [route.hash]);
     
+      // Scroll-in motion, once per element: dividers draw themselves (zigzag first,
+      // easing into the wave) and sections marked data-reveal fade up. CSS only
+      // hides them while the "motion" class is on and reduced motion is off.
+      useEffect(function () {
+        if (!("IntersectionObserver" in window)) return;
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (en) {
+            if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); }
+          });
+        }, { rootMargin: "0px 0px -6% 0px", threshold: 0.12 });
+        document.querySelectorAll(".divider:not(.is-in), [data-reveal]:not(.is-in)").forEach(function (el) { io.observe(el); });
+        return function () { io.disconnect(); };
+      }, [route.hash]);
+    
       var page;
       if (route.name === "home") page = h(HomePage, null);
       else if (route.name === "collection") page = h(CollectionPage, { route: route });
@@ -15762,6 +15823,7 @@ Error generating stack: ` + i.message + `
     }
     
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
+    if ("IntersectionObserver" in window) document.documentElement.classList.add("motion");
     var rootEl = document.getElementById("root");
     // React replaces the static first-paint shell from index.html on its first commit.
     ReactDOMClient.createRoot(rootEl).render(h(App, null));

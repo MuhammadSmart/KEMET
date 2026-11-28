@@ -35,6 +35,8 @@
 .divider { color: var(--gold); height: 16px; width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: var(--gutter); }
 .divider svg { width: 100%; height: 16px; }
 .divider-light { color: var(--gold-light); }
+.divider-trail { stroke: var(--turquoise); opacity: 0.85; }
+.divider-light .divider-trail { stroke: var(--turquoise-light); }
 [dir="rtl"] .divider svg { transform: scaleX(-1); } /* chevrons start at the reading start */
 
 /* ---- Chips (filters) ---- */

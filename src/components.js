@@ -246,7 +246,9 @@ function photoAlt(p) {
 function sizesSummary(p) {
   if (!p.sized) return null;
   var avail = PERFUME_SIZES.filter(function (s) { return isSizeAvailable(p, s.key); });
-  return avail.map(function (s) { return toAr(s.ml); }).join(" · ") + " مل";
+  // Arabic comma, not a middle dot: "·" next to Arabic-Indic digits reads like the
+  // zero "٠", so "٣٠ · ٥٠" looked like one long number.
+  return avail.map(function (s) { return toAr(s.ml); }).join("، ") + " مل";
 }
 
 function ProductCard(props) {

@@ -3,7 +3,9 @@
 /* Design tokens: colors, type, spacing. Change the brand here.
    Alabaster = reading & shopping surfaces, cobalt = focal areas, gold = restrained accents.
    Contrast (WCAG 2.2): ink on alabaster 14.7:1, ink-2 7.1:1, gold-ink 5.6:1,
-   alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1. */
+   alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1, turquoise-ink on surface 6.2:1.
+   Turquoise = the faience-blue glass trails on the Met's New Kingdom perfume bottle
+   (26.7.1177), next to its yellow and white ones. Use it sparingly. */
 /* Display fonts, SIL OFL 1.1 (licenses in fonts/). Headings only: body, prices and
    controls stay on the system Arabic font for legibility.
    - El Messiri (Mohamed Gaber): tall, slender Arabic headings.
@@ -38,6 +40,10 @@
   --gold: #b8913f;          /* decoration only (lines, motifs) */
   --gold-ink: #7a5a17;      /* gold-toned text on light surfaces */
   --gold-light: #e3c67a;    /* gold-toned text/lines on cobalt */
+  --turquoise: #2f9a94;     /* decoration on light surfaces (3.3:1) */
+  --turquoise-ink: #166b67; /* turquoise text on light surfaces */
+  --turquoise-tint: #e2f2ef;
+  --turquoise-light: #3aa9a2; /* decoration on cobalt (5:1) */
   --danger: #8f2d1f;
 
   --font-ar: "Segoe UI", "SF Arabic", "Geeza Pro", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, system-ui, sans-serif;
@@ -122,6 +128,14 @@ button { cursor: pointer; }
 .fine { font-size: var(--step--1); color: var(--ink-2); line-height: 1.6; }
 .muted-motif { color: var(--gold); margin-inline: auto; }
 
+/* Scroll-in motion (see App in src/app.js). Without JS, without IntersectionObserver,
+   or with reduced motion, everything is simply visible. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion .divider svg { clip-path: inset(0 100% 0 0); transition: clip-path 1.8s cubic-bezier(0.3, 0.6, 0.2, 1); }
+  .motion .divider.is-in svg { clip-path: inset(0 0 0 0); }
+  .motion [data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .motion [data-reveal].is-in { opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
@@ -137,6 +151,11 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
   flex-wrap: wrap; margin-bottom: var(--space-5);
 }
 .section-sub { color: var(--ink-2); margin-top: var(--space-1); }
+/* A tiny cornice (gold cavetto on a turquoise torus) above section titles. */
+.section-head h2::before {
+  content: ""; display: block; width: 36px; height: 11px; margin-bottom: var(--space-2);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 11'%3E%3Cpath d='M0 0h36l-3.5 6.5h-29z' fill='%23b8913f'/%3E%3Crect x='3' y='7.6' width='30' height='2.8' rx='1.4' fill='%232f9a94'/%3E%3C/svg%3E") no-repeat;
+}
 .count { color: var(--gold-ink); font-weight: 600; font-size: 0.8em; }
 
 /* ---- Header ---- */
@@ -173,6 +192,19 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
   margin-inline-start: -1px; background: currentColor; border-radius: 2px;
 }
 .cartouche-light { color: var(--gold-light); }
+
+/* One gold glint across the header cartouche when the page first opens, in the
+   reading direction (right to left). Only after the app takes over, so the
+   first-paint copy doesn't play it twice; never with reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .app-ready .site-header .cartouche-ring { position: relative; overflow: hidden; }
+  .app-ready .site-header .cartouche-ring::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 236, 170, 0.75) 50%, transparent 70%);
+    transform: translateX(130%); animation: cartouche-glint 1.3s ease-in-out 0.5s 1 both;
+  }
+}
+@keyframes cartouche-glint { to { transform: translateX(-130%); } }
 .main-nav { display: none; }
 .main-nav ul { display: flex; gap: var(--space-1); list-style: none; padding: 0; margin: 0; }
 .main-nav a {
@@ -318,6 +350,8 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .divider { color: var(--gold); height: 16px; width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: var(--gutter); }
 .divider svg { width: 100%; height: 16px; }
 .divider-light { color: var(--gold-light); }
+.divider-trail { stroke: var(--turquoise); opacity: 0.85; }
+.divider-light .divider-trail { stroke: var(--turquoise-light); }
 [dir="rtl"] .divider svg { transform: scaleX(-1); } /* chevrons start at the reading start */
 
 /* ---- Chips (filters) ---- */
@@ -440,18 +474,38 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .eyebrow [lang="en"] { letter-spacing: 0.24em; }
 .eyebrow-light { color: var(--gold-light); }
 
-/* ---- Hero: photo in an arched alabaster niche on a cobalt panel ---- */
-.hero { padding-block: var(--space-4) var(--space-6); }
+/* ---- Hero: photo framed as an Egyptian doorway on a cobalt panel ----
+   Temple doorways are topped by a cavetto cornice (the "Egyptian gorge": a
+   concave lip flaring outward, painted with upright palm fronds) sitting on a
+   torus moulding bound with ribbon. Drawn here with CSS only. */
+.hero { padding-block: var(--space-4) var(--space-6); overflow-x: clip; }
 .hero-inner { display: grid; gap: var(--space-5); }
-.hero-media { position: relative; }
+.hero-media { position: relative; --frame-w: min(88%, 380px); }
+.hero-cornice {
+  position: relative; display: grid; margin-inline: auto; width: calc(var(--frame-w) * 1.1);
+  filter: drop-shadow(0 6px 8px rgba(18, 39, 94, 0.25));
+}
+.hero-cornice::before { /* cavetto: wide at the top lip, curving in toward the door */
+  content: ""; height: clamp(26px, 7vw, 40px);
+  clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%);
+  border-top: 3px solid var(--alabaster-3);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 11px, rgba(122, 90, 23, 0.45) 11px 12.5px, transparent 12.5px 23px, rgba(47, 154, 148, 0.45) 23px 24.5px),
+    linear-gradient(180deg, #fffaf0 0%, #f1e8d7 35%, #d8c9ac 100%);
+}
+.hero-cornice::after { /* torus moulding, bound with ribbon */
+  content: ""; height: 8px; margin-inline: 4.5%; border-radius: 4px;
+  background: repeating-linear-gradient(135deg, var(--gold) 0 3px, #f6ebcd 3px 8px);
+  box-shadow: inset 0 -2px 2px rgba(35, 28, 20, 0.25);
+}
 .hero-media::before {
   content: ""; position: absolute; inset: 14% -4% 0; border-radius: var(--radius-l);
   background: radial-gradient(120% 90% at 50% 20%, var(--cobalt) 0%, var(--cobalt-deep) 70%);
 }
 .hero-arch {
-  position: relative; margin-inline: auto; width: min(88%, 380px);
+  position: relative; margin-inline: auto; width: var(--frame-w);
   aspect-ratio: 1 / 1; overflow: hidden;
-  border-radius: 999px 999px var(--radius) var(--radius);
+  border-radius: 2px 2px var(--radius-s) var(--radius-s);
   border: 6px solid var(--alabaster); box-shadow: 0 0 0 1px var(--gold), 0 18px 40px rgba(18, 39, 94, 0.35);
   background: var(--alabaster-2);
 }
@@ -460,15 +514,56 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .hero-title { font-size: var(--step-4); line-height: 1.15; }
 .lede { font-size: var(--step-1); color: var(--ink-2); max-width: 36ch; }
 .hero-copy .btn-row { margin-top: var(--space-2); }
-.hero-facts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); color: var(--ink-2); font-size: var(--step--1); margin-top: var(--space-2); }
-.hero-facts li { display: inline-flex; align-items: center; gap: 4px; }
-.hero-facts li + li::before { content: ""; width: 5px; height: 5px; transform: rotate(45deg); background: var(--gold); margin-inline-end: var(--space-3); }
-.hero-facts b { color: var(--ink); }
+/* Size shelf: three bottles at true relative size on an alabaster plinth,
+   like pieces on a museum stand. 2.5D with plain CSS: a top face seen from just
+   above, a veined front face with a gold edge, and a soft shadow under each bottle. */
+.size-shelf { justify-self: stretch; max-width: 26rem; margin-top: var(--space-3); }
+.size-shelf-title { font-size: var(--step--1); font-weight: 700; color: var(--gold-ink); margin-bottom: var(--space-2); }
+.size-shelf-list { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); list-style: none; padding: 0; margin: 0; }
+.size-shelf-list::before { /* top face */
+  content: ""; position: absolute; inset-inline: 1%; top: 82px; height: 14px;
+  background: linear-gradient(180deg, #fbf6ec, #e6dbc7);
+  clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%);
+}
+.size-shelf-list::after { /* front face */
+  content: ""; position: absolute; inset-inline: 1%; top: 96px; height: 16px;
+  border-top: 1px solid var(--gold); border-radius: 0 0 3px 3px;
+  background:
+    repeating-linear-gradient(112deg, transparent 0 18px, rgba(133, 114, 88, 0.14) 18px 19px, transparent 19px 41px),
+    repeating-linear-gradient(64deg, transparent 0 27px, rgba(255, 255, 255, 0.4) 27px 29px, transparent 29px 55px),
+    linear-gradient(180deg, #e7dbc6, #d2c3a6);
+  box-shadow: 0 14px 18px -12px rgba(35, 28, 20, 0.5);
+}
+.size-shelf-item { position: relative; z-index: 1; display: grid; justify-items: center; align-content: start; gap: 2px; text-align: center; }
+.size-shelf-slot { position: relative; height: 92px; display: flex; align-items: flex-end; justify-content: center; margin-bottom: 26px; }
+.size-shelf-slot::after { /* contact shadow on the plinth */
+  content: ""; position: absolute; bottom: -2px; left: 50%; width: 46px; height: 6px; transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(35, 28, 20, 0.32), transparent); z-index: -1;
+}
+.size-bottle { position: relative; filter: drop-shadow(-2px 3px 3px rgba(35, 28, 20, 0.12)); }
+@media (prefers-reduced-motion: no-preference) {
+  @media (hover: hover) {
+    .size-bottle { transition: transform 0.35s ease; }
+    .size-shelf-item:hover .size-bottle { transform: translateY(-5px) rotate(-2deg); }
+  }
+  /* The juice rises when you come back to the homepage (see SizeShelf). */
+  .size-shelf.fill .size-juice { transform-box: fill-box; transform-origin: 50% 100%; animation: juice-fill 1.1s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
+  .size-shelf.fill .size-shelf-item:nth-child(2) .size-juice { animation-delay: 0.12s; }
+  .size-shelf.fill .size-shelf-item:nth-child(3) .size-juice { animation-delay: 0.24s; }
+}
+@keyframes juice-fill { from { transform: scaleY(0.04); } }
+.size-shelf-ml { font-family: var(--font-display); font-size: var(--step-1); font-weight: 600; line-height: 1.2; }
+.size-shelf-price { font-size: var(--step--1); color: var(--ink-2); font-weight: 600; }
+.size-shelf-tag {
+  margin-top: 4px; font-size: 0.75rem; font-weight: 700; color: var(--turquoise-ink);
+  border: 1px solid var(--turquoise); border-radius: 999px; padding: 1px 8px; background: var(--turquoise-tint);
+}
 @media (min-width: 720px) {
   .hero { padding-block: var(--space-6); }
   .hero-inner { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); align-items: center; gap: var(--space-6); }
   .hero-media { order: 2; }
-  .hero-arch { aspect-ratio: 4 / 5; width: min(100%, 440px); }
+  .hero-media { --frame-w: min(100%, 440px); }
+  .hero-arch { aspect-ratio: 4 / 5; }
   .hero-arch img { object-position: 50% 50%; }
 }
 

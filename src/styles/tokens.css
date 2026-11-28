@@ -1,7 +1,9 @@
 /* Design tokens: colors, type, spacing. Change the brand here.
    Alabaster = reading & shopping surfaces, cobalt = focal areas, gold = restrained accents.
    Contrast (WCAG 2.2): ink on alabaster 14.7:1, ink-2 7.1:1, gold-ink 5.6:1,
-   alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1. */
+   alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1, turquoise-ink on surface 6.2:1.
+   Turquoise = the faience-blue glass trails on the Met's New Kingdom perfume bottle
+   (26.7.1177), next to its yellow and white ones. Use it sparingly. */
 /* Display fonts, SIL OFL 1.1 (licenses in fonts/). Headings only: body, prices and
    controls stay on the system Arabic font for legibility.
    - El Messiri (Mohamed Gaber): tall, slender Arabic headings.
@@ -36,6 +38,10 @@
   --gold: #b8913f;          /* decoration only (lines, motifs) */
   --gold-ink: #7a5a17;      /* gold-toned text on light surfaces */
   --gold-light: #e3c67a;    /* gold-toned text/lines on cobalt */
+  --turquoise: #2f9a94;     /* decoration on light surfaces (3.3:1) */
+  --turquoise-ink: #166b67; /* turquoise text on light surfaces */
+  --turquoise-tint: #e2f2ef;
+  --turquoise-light: #3aa9a2; /* decoration on cobalt (5:1) */
   --danger: #8f2d1f;
 
   --font-ar: "Segoe UI", "SF Arabic", "Geeza Pro", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, system-ui, sans-serif;

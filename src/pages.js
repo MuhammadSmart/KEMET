@@ -7,6 +7,23 @@ function PageHeading(props) {
 }
 
 // ---------------- Home ----------------
+// The three sizes side by side, each bottle drawn at its real relative size
+// (height follows the cube root of the volume), with its price. The size with
+// the lowest price per ml gets a "best value" tag.
+function SizeShelf() {
+  var perMl = function (s) { return priceRange(s.key, 1).hi / s.ml; };
+  var best = PERFUME_SIZES.reduce(function (a, b) { return perMl(b) < perMl(a) ? b : a; }).key;
+  var fill = useRef(appMounted).current;
+  return h("div", { className: "size-shelf" + (fill ? " fill" : "") },
+    h("p", { className: "size-shelf-title", id: "size-shelf-title" }, "كل عطر بـ٣ أحجام"),
+    h("ul", { className: "size-shelf-list", role: "list", "aria-labelledby": "size-shelf-title" }, PERFUME_SIZES.map(function (s) {
+      return h("li", { key: s.key, className: "size-shelf-item" + (s.key === best ? " is-best" : "") },
+        h("span", { className: "size-shelf-slot" }, h(SizeBottle, { id: "sb-" + s.key, height: Math.round(84 * Math.cbrt(s.ml / 100)) })),
+        h("b", { className: "size-shelf-ml" }, s.label),
+        h("span", { className: "size-shelf-price" }, priceLabel(s.key)),
+        s.key === best && h("span", { className: "size-shelf-tag", title: perMlLabel(s.key) }, "الأوفر"));
+    })));
+}
 function HomePage() {
   var featured = FEATURED_IDS.map(productById).filter(Boolean);
   var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });
@@ -14,6 +31,8 @@ function HomePage() {
     h("section", { className: "hero", "aria-labelledby": "hero-title" },
       h("div", { className: "wrap hero-inner" },
         h("div", { className: "hero-media" },
+          // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
+          h("div", { className: "hero-cornice", "aria-hidden": "true" }),
           h("div", { className: "hero-arch" },
             h("picture", null,
               h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),
@@ -25,18 +44,15 @@ function HomePage() {
         h("div", { className: "hero-copy" },
           h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
           h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
-          h("p", { className: "lede" }, "عطور أو دو بارفان حريمي ورجالي من محل كيميت، كل عطر بـ٣ أحجام. اختار ريحتك وحجمك، وابعت طلبك كله في رسالة واتساب واحدة."),
+          h("p", { className: "lede" }, "من «نفرتاري» لـ«صقر»: عشر عطور حريمي ورجالي بأسامي من مصر القديمة. اختار اللي يشبهك، واطلبه على واتساب."),
           h("div", { className: "btn-row" },
             h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
             h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
-          h("ul", { className: "hero-facts", role: "list" },
-            h("li", null, h("b", null, "٣٠ · ٥٠ · ١٠٠"), " مل"),
-            h("li", null, "من ", h("b", null, "٢٠٠"), " جنيه"),
-            h("li", null, "الطلب على ", h("b", null, "واتساب")))))),
+          h(SizeShelf, null)))),
 
     h(Divider, null),
 
-    h("section", { className: "wrap section", "aria-labelledby": "featured-title" },
+    h("section", { className: "wrap section", "aria-labelledby": "featured-title", "data-reveal": "" },
       h("div", { className: "section-head" },
         h("div", null,
           h("h2", { id: "featured-title" }, "عطور كيميت"),
@@ -55,7 +71,7 @@ function HomePage() {
         })),
       h(ProductGrid, { items: featured, columns: 4 })),
 
-    h("section", { className: "wrap section", "aria-labelledby": "more-title" },
+    h("section", { className: "wrap section", "aria-labelledby": "more-title", "data-reveal": "" },
       h("h2", { id: "more-title" }, "كمان في كيميت"),
       h("ul", { className: "section-links", role: "list" }, others.map(function (s) {
         var n = productsIn(s.id).length;
@@ -66,7 +82,7 @@ function HomePage() {
       }))),
 
     h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },
-      h("div", { className: "wrap story-inner" },
+      h("div", { className: "wrap story-inner", "data-reveal": "" },
         h("div", { className: "story-mark" }, h(Lotus, { size: 44 })),
         h("div", { className: "story-copy" },
           h("p", { className: "eyebrow eyebrow-light" }, "حكايتنا"),
@@ -82,7 +98,7 @@ function HomePage() {
               h("li", null, h("a", { href: "https://forces.si.edu/soils/02_08_03.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Smithsonian — Kemet, the black land")))))),
       h(Divider, { tone: "light" })),
 
-    h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title" },
+    h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title", "data-reveal": "" },
       h("h2", { id: "order-title" }, "إزاي تطلب"),
       h("ol", { className: "steps" },
         h("li", null, h("b", null, "اختار العطر والحجم"), h("span", null, "من صفحة كل عطر هتشوف سعر كل حجم قبل ما تضيفه.")),

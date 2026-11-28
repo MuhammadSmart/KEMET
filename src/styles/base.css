@@ -49,6 +49,14 @@ button { cursor: pointer; }
 .fine { font-size: var(--step--1); color: var(--ink-2); line-height: 1.6; }
 .muted-motif { color: var(--gold); margin-inline: auto; }
 
+/* Scroll-in motion (see App in src/app.js). Without JS, without IntersectionObserver,
+   or with reduced motion, everything is simply visible. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion .divider svg { clip-path: inset(0 100% 0 0); transition: clip-path 1.8s cubic-bezier(0.3, 0.6, 0.2, 1); }
+  .motion .divider.is-in svg { clip-path: inset(0 0 0 0); }
+  .motion [data-reveal] { opacity: 0; transform: translateY(16px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .motion [data-reveal].is-in { opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
