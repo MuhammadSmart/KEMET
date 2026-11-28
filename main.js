@@ -14493,7 +14493,19 @@ Error generating stack: ` + i.message + `
       "مارشميلو": "حلوى ناعمة إسفنجية بالفانيليا",
       "حلوى قطن": "غزل البنات، سكر منفوش",
       "عرقسوس": "حلو فيه حدّة خفيفة زي العرقسوس",
-      "كشمش أحمر": "توت أحمر صغير حامض شوية"
+      "كشمش أحمر": "توت أحمر صغير حامض شوية",
+      "ألدهيدات": "إحساس نضافة لامع زي الصابون الفاخر",
+      "توابل": "بهارات دافية",
+      "رمان": "فاكهة حمرا حامضة منعشة",
+      "نفحات بودري": "ناعم زي البودرة",
+      "أخشاب": "خشب ناشف دافي",
+      "قرنفل": "بهار دافي حاد زي المسمار",
+      "دفرة": "خلطة سودانية بتتبخّر، ريحتها دخانية دافية",
+      "خشب بالو سانتو": "خشب مقدّس ريحته دخانية حلوة",
+      "زهر التفاح": "زهرة بيضا خفيفة فيها ريحة فاكهة",
+      "زهر الأناناس": "زهرة استوائية حلوة",
+      "كراميل مملح": "كراميل بلمسة ملح",
+      "يانسون": "حلو زي الينسون"
     };
     
     // Placeholder for products without their own description. Product pages don't
@@ -14674,18 +14686,19 @@ Error generating stack: ` + i.message + `
       "tutankhamun": {"family":"amber","character":"تبغ وفانيليا وكاكاو بفواكه مجففة، دافي وتقيل","notes":{"top":["تبغ","قرفة"],"heart":["فانيليا","كاكاو","تونكا"],"base":["فواكه مجففة","أرز"]},"accords":[["tobacco",100],["vanilla",82],["sweet",68],["warm_spicy",56],["cacao",46],["balsamic",38]]},
       "nefertiti": {"family":"amber","character":"أوركيد وكمأة على باتشولي وشوكولاتة، غامق وفخم","notes":{"top":["كمأة","جاردينيا","كشمش أسود","يلانج يلانج","برغموت"],"heart":["أوركيد","لوتس","فواكه مشكلة"],"base":["باتشولي","فانيليا","بخور","صندل","كاكاو"]},"accords":[["earthy",100],["amber",82],["warm_spicy",68],["sweet",56],["patchouli",46],["floral",38]]},
       "azm": {"family":"amber","character":"هيل وكستنا على فانيليا، دافي وشبابي","notes":{"top":["هيل","فلفل وردي","بنفسج"],"heart":["مريمية","كستنا"],"base":["فانيليا","عنبر","أرز"]},"accords":[["warm_spicy",100],["sweet",82],["vanilla",68],["aromatic",56],["amber",46],["fresh_spicy",38]]},
-      "harir": {"family":"musky","character":"مسك ناعم بلمسة زهور، نضيف وهادي"},
+      "adham": {"family":"floral","character":"ورد وياسمين على فانيليا وصندل، بودري وحلو","notes":{"top":["ألدهيدات","فواكه مشكلة"],"heart":["ورد","ياسمين"],"base":["فانيليا","صندل","توابل"]},"accords":[["powdery",100],["sweet",82],["rose",68],["white_floral",56],["vanilla",46],["woody",38]]},
+      "harir": {"family":"musky","character":"مسك ناعم برمان وفاوانيا، نضيف وهادي","notes":{"top":["رمان","فراولة"],"heart":["فاوانيا","زنبق الوادي"],"base":["نفحات بودري","أخشاب"]},"accords":[["musky",100],["powdery",82],["fruity",68],["floral",56],["fresh",46],["woody",38]]},
       "batal": {"family":"fresh","character":"بحري منعش بجريب فروت وورق الغار، رياضي وفواح","notes":{"top":["جريب فروت","نفحات بحرية","يوسفي"],"heart":["ورق الغار","ياسمين"],"base":["عنبر رمادي","خشب الجواياك","طحلب البلوط","باتشولي"]},"accords":[["aquatic",100],["citrus",82],["fresh",68],["woody",56],["amber",46],["aromatic",38]]},
       "sehr": {"family":"gourmand","character":"لوز وفانيليا بزهور بيضا، حلو وساحر","notes":{"top":["جوز الهند","برقوق","مشمش"],"heart":["لوز","تيوبروز","ياسمين","زنبق الوادي"],"base":["فانيليا","مسك","صندل"]},"accords":[["vanilla",100],["sweet",82],["powdery",68],["white_floral",56],["fruity",46],["amber",38]]},
-      "arousa": {"family":"woody","character":"صندل ومسك على الطريقة السودانية، دافي وأنثوي"},
+      "arousa": {"family":"woody","character":"صندل ومسك على الطريقة السودانية، دافي وأنثوي","notes":{"top":["ورد","قرنفل"],"heart":["صندل","دفرة"],"base":["مسك","عنبر","عود"]},"accords":[["woody",100],["musky",82],["amber",68],["rose",56],["warm_spicy",46],["smoky",38]]},
       "fengan": {"family":"gourmand","character":"قهوة وتوابل على فانيليا وبرالين، دافي وحلو","notes":{"top":["قرفة","هيل","زنجبيل"],"heart":["برالين","فواكه مسكرة","زهر البرتقال"],"base":["قهوة","فانيليا","تونكا","بنزوين","مسك"]},"accords":[["coffee",100],["sweet",82],["warm_spicy",68],["vanilla",56],["amber",46],["cinnamon",38]]},
       "shahd": {"family":"gourmand","character":"كشمش وكستنا بزهور على فانيليا وكاكاو، حلو وأنثوي","notes":{"top":["كشمش أحمر","يوسفي","قرفة"],"heart":["كستنا","زهر البرتقال","ورد","ياسمين"],"base":["فانيليا","مسك","كاكاو","تونكا"]},"accords":[["sweet",100],["vanilla",82],["warm_spicy",68],["white_floral",56],["fruity",46],["cacao",38]]},
       "rotab": {"family":"gourmand","character":"تمر وقرفة على فانيليا وبرالين، حلو وشرقي","notes":{"top":["قرفة","جوزة الطيب","برغموت"],"heart":["تمر","برالين","تيوبروز"],"base":["فانيليا","تونكا","عنبر","مر","بنزوين"]},"accords":[["sweet",100],["warm_spicy",82],["amber",68],["vanilla",56],["cinnamon",46],["balsamic",38]]},
       "emlaq": {"family":"gourmand","character":"كمثرى ولافندر على فانيليا، حلو وقوي","notes":{"top":["كمثرى","لافندر","نعناع","برغموت","ليمون"],"heart":["قرفة","مريمية"],"base":["فانيليا","عنبر","باتشولي","أرز"]},"accords":[["sweet",100],["vanilla",82],["fruity",68],["aromatic",56],["lavender",46],["warm_spicy",38]]},
-      "nama": {"family":"gourmand","character":"فانيليا بودري ناعمة بمسك، دافية ومريحة"},
+      "nama": {"family":"gourmand","character":"فانيليا بودري بجوز الهند على مسك أبيض، دافية ومريحة","notes":{"top":["جوز الهند"],"heart":["فانيليا"],"base":["مسك أبيض","خشب بالو سانتو"]},"accords":[["vanilla",100],["powdery",82],["sweet",68],["musky",56],["woody",46]]},
       "warda": {"family":"floral","character":"ورد بودري ناعم بفانيليا، رقيق وشيك","notes":{"top":["سوسن","فاوانيا","زنبق الوادي"],"heart":["ورد","مشمش","خوخ"],"base":["فانيليا","مسك","تونكا","صندل"]},"accords":[["powdery",100],["vanilla",82],["rose",68],["floral",56],["fruity",46],["sweet",38]]},
       "nasim": {"family":"fresh","character":"حمضيات وشاي أخضر على مسك، منعش ونضيف","notes":{"top":["برغموت","يوسفي"],"heart":["شاي أخضر","كشمش أسود"],"base":["مسك","صندل","بيتيجرين"]},"accords":[["citrus",100],["fresh",82],["green",68],["musky",56],["fruity",46],["woody",38]]},
-      "sahrana": {"family":"amber","character":"تيوبروز وعسل على عنبر، غامق وأنثوي"},
+      "sahrana": {"family":"amber","character":"عسل وتيوبروز وكرز على فانيليا وتونكا، غامق وأنثوي","notes":{"top":["عسل","برتقال"],"heart":["تيوبروز","كرز","زهر البرتقال","كمثرى"],"base":["تونكا","فانيليا","باتشولي","صندل","عنبر","مسك أبيض"]},"accords":[["sweet",100],["white_floral",82],["tuberose",68],["vanilla",56],["fruity",46],["amber",38]]},
       "najm": {"family":"amber","character":"برالين وقرفة على باتشولي، حلو وجريء","notes":{"top":["ليمون"],"heart":["برالين","قرفة","هيل","ورد"],"base":["باتشولي","عنبر","بلسم"]},"accords":[["sweet",100],["warm_spicy",82],["cinnamon",68],["amber",56],["patchouli",46],["woody",38]]},
       "wadi": {"family":"amber","character":"زعفران وكشمش على ورد وعنبر، شرقي ودافي","notes":{"top":["زعفران","كشمش أسود"],"heart":["ورد"],"base":["عنبر","باتشولي"]},"accords":[["warm_spicy",100],["rose",82],["amber",68],["fruity",56],["patchouli",46],["woody",38]]},
       "qobtan": {"family":"amber","character":"لافندر وسوسن على فانيليا، دافي وأنيق","notes":{"top":["هيل"],"heart":["لافندر","سوسن"],"base":["فانيليا","أرز"]},"accords":[["vanilla",100],["aromatic",82],["warm_spicy",68],["iris",56],["powdery",46],["lavender",38]]},
@@ -14693,6 +14706,7 @@ Error generating stack: ` + i.message + `
       "sultan": {"family":"woody","character":"عود وخشب الورد بهيل، دافي وراقي","notes":{"top":["خشب الورد","هيل","فلفل"],"heart":["عود","صندل","فيتيفر"],"base":["تونكا","فانيليا","عنبر"]},"accords":[["oud",100],["woody",82],["warm_spicy",68],["amber",56],["balsamic",46],["earthy",38]]},
       "nada": {"family":"floral","character":"ورد وفانيليا بلمسة ليمون، حلو وناعم","notes":{"top":["ليمون"],"heart":["ورد","سكر"],"base":["فانيليا","مسك أبيض","أرز"]},"accords":[["rose",100],["vanilla",82],["sweet",68],["powdery",56],["citrus",46],["musky",38]]},
       "mazag": {"family":"amber","character":"تبغ وكاكاو بقرفة على عنبر، دافي وحلو","notes":{"top":["أرز","كاكاو"],"heart":["ليلك","قرفة"],"base":["عنبر","تبغ","ورد"]},"accords":[["tobacco",100],["cacao",82],["warm_spicy",68],["amber",56],["woody",46],["sweet",38]]},
+      "maha": {"family":"floral","character":"خوخ وزهور فاكهية على ورد ومسك، حلو ومنعش","notes":{"top":["خوخ","زهر التفاح"],"heart":["زهر الأناناس"],"base":["ورد","مسك","باتشولي"]},"accords":[["fruity",100],["floral",82],["sweet",68],["musky",56],["rose",46],["patchouli",38]]},
       "shahm": {"family":"amber","character":"لافندر وعسل على تبغ وتونكا، حلو وقوي","notes":{"top":["لافندر","نعناع"],"heart":["فانيليا","بنزوين"],"base":["عسل","تونكا","تبغ"]},"accords":[["sweet",100],["aromatic",82],["vanilla",68],["lavender",56],["tobacco",46],["amber",38]]},
       "hayba": {"family":"woody","character":"برغموت وزهر البرتقال على خشب، نضيف ومودرن","notes":{"top":["برغموت"],"heart":["زهر البرتقال"],"base":["باتشولي","أرز"]},"accords":[["citrus",100],["white_floral",82],["woody",68],["patchouli",56],["fresh",46],["aromatic",38]]},
       "lahfa": {"family":"floral","character":"كمثرى وفلفل وردي على ورد وفانيليا، حلو وجريء","notes":{"top":["كمثرى","فلفل وردي","جريب فروت","كشمش أسود"],"heart":["ورد","ياسمين","هليوتروب"],"base":["فانيليا","أرز","باتشولي"]},"accords":[["fruity",100],["sweet",82],["rose",68],["vanilla",56],["fresh_spicy",46],["woody",38]]},
@@ -14700,12 +14714,13 @@ Error generating stack: ` + i.message + `
       "amira": {"family":"floral","character":"توت وزهر البرتقال على ورد ومسك، ناعم وأنثوي","notes":{"top":["زهر البرتقال","توت"],"heart":["ورد","ياسمين","سوسن","خشب الكشمير"],"base":["مسك","تونكا"]},"accords":[["floral",100],["rose",82],["fruity",68],["powdery",56],["musky",46],["sweet",38]]},
       "dalaa": {"family":"gourmand","character":"جاردينيا ومسك على فانيليا، حلو وناعم","notes":{"top":["يوسفي","فلفل وردي","برغموت"],"heart":["جاردينيا","ورد","جيرانيوم","بنفسج"],"base":["فانيليا","مسك","صندل"]},"accords":[["sweet",100],["vanilla",82],["powdery",68],["white_floral",56],["musky",46],["citrus",38]]},
       "karaza": {"family":"gourmand","character":"كرز ومارشميلو على مسك، حلو ومرح","notes":{"top":["كرز"],"heart":["مارشميلو"],"base":["مسك"]},"accords":[["fruity",100],["sweet",82],["vanilla",68],["musky",56],["powdery",46]]},
-      "fetna": {"family":"amber","character":"عسل وزهور على باتشولي، حلو وجريء"},
+      "fetna": {"family":"amber","character":"ياسمين وكراميل مملح على فانيليا، حلو وجريء","notes":{"top":["ياسمين"],"heart":["كراميل مملح"],"base":["فانيليا"]},"accords":[["sweet",100],["vanilla",82],["white_floral",68],["salty",56],["amber",46]]},
       "sama": {"family":"fresh","character":"نعناع ولافندر على أرز وأمبروكسان، منعش وأنيق","notes":{"top":["نعناع","لافندر"],"heart":["أرز","صندل"],"base":["أمبروكسان","طحلب"]},"accords":[["aromatic",100],["fresh",82],["lavender",68],["woody",56],["amber",46],["green",38]]},
       "ghazl": {"family":"gourmand","character":"حلوى قطن وفراولة على كراميل وفانيليا، حلو جدًا","notes":{"top":["برتقال","توت"],"heart":["حلوى قطن","فراولة","عرقسوس"],"base":["كراميل","فانيليا","مسك"]},"accords":[["sweet",100],["vanilla",82],["fruity",68],["powdery",56],["musky",46]]},
       "nasr": {"family":"amber","character":"لافندر وفلفل على بخور وفانيليا، دافي وقوي","notes":{"top":["لافندر","هيل","فلفل أسود"],"heart":["بخور","باتشولي"],"base":["فانيليا","تونكا"]},"accords":[["warm_spicy",100],["amber",82],["woody",68],["sweet",56],["aromatic",46],["smoky",38]]},
+      "hekaya": {"family":"amber","character":"توت ويانسون على عنبر وعسل، حلو وشرقي","notes":{"top":["توت","يانسون"],"heart":["خشب الكشمير","روزماري"],"base":["عنبر","عسل","مسك"]},"accords":[["amber",100],["sweet",82],["fruity",68],["aromatic",56],["woody",46],["musky",38]]},
       "hanem": {"family":"floral","character":"ورد وسوسن على جلد وفانيليا، شيك وراقي","notes":{"top":["برغموت"],"heart":["ورد","سوسن"],"base":["جلد","فانيليا","باتشولي"]},"accords":[["powdery",100],["iris",82],["leather",68],["vanilla",56],["rose",46],["patchouli",38]]},
-      "malika": {"family":"woody","character":"عود وورد بلمسة بخور، شرقي وفخم"}
+      "malika": {"family":"woody","character":"عود وورد ببرالين على فانيليا، شرقي وفخم","notes":{"top":["خشب الجواياك"],"heart":["عود","ورد","برالين"],"base":["فانيليا","بلسم"]},"accords":[["oud",100],["rose",82],["sweet",68],["woody",56],["vanilla",46],["balsamic",38]]}
     };
     products.forEach(function (p) {
       if (SCENT_PROFILES[p.id]) Object.assign(p, SCENT_PROFILES[p.id]);
