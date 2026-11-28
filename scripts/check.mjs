@@ -37,7 +37,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
-  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -148,6 +148,19 @@ await test("statistics: page URLs leave out search text and sizes", () => {
   assert.equal(K.analyticsUrl("#/collection/men?q=abc&family=floral"), "/collection/men?family=floral");
   assert.equal(K.analyticsUrl("#sec-men"), "/collection/men");
   assert.match(K.ANALYTICS.umamiWebsiteId, /^$|^[0-9a-f-]{36}$/, "Umami Website ID should be empty or a UUID");
+});
+
+await test("opening offer: shows until its end date and adds a line to orders", () => {
+  const saved = K.OFFER.endsOn;
+  try {
+    K.OFFER.endsOn = "2026-12-31";
+    assert.equal(K.offerActive(new Date(2026, 11, 31, 23, 0)), true);
+    assert.equal(K.offerActive(new Date(2027, 0, 1, 0, 30)), false);
+    assert.equal(K.offerUntil(), "لحد ٣١ ديسمبر");
+    K.OFFER.endsOn = null;
+    assert.equal(K.offerActive(new Date(2030, 0, 1)), K.OFFER.percent > 0);
+  } finally { K.OFFER.endsOn = saved; }
+  if (K.offerActive()) assert.match(K.offerNote(), /^\n.+خصم ٢٠٪ على كل المنتجات$/);
 });
 
 await test("prices: default size, ranges, per-ml labels", () => {

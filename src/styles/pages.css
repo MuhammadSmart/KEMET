@@ -10,6 +10,16 @@
    torus moulding bound with ribbon. Drawn here with CSS only. */
 .hero { padding-block: var(--space-4) var(--space-6); overflow-x: clip; }
 .hero-inner { display: grid; gap: var(--space-5); }
+/* Opening offer strip at the top of the homepage. */
+.offer-strip {
+  display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius);
+  background: var(--cobalt-deep); color: var(--on-cobalt); border: 1px solid var(--gold);
+}
+.offer-strip .icon { flex: none; color: var(--gold-light); }
+.offer-strip b { color: var(--gold-light); }
+.offer-strip-note { display: block; font-size: var(--step--1); color: var(--on-cobalt-2); }
+@media (min-width: 720px) { .offer-strip { justify-content: center; text-align: center; } .offer-strip-note { display: inline; margin-inline-start: var(--space-2); } }
 .hero-media { position: relative; --frame-w: min(88%, 380px); }
 .hero-cornice {
   position: relative; display: grid; margin-inline: auto; width: calc(var(--frame-w) * 1.1);
@@ -173,6 +183,8 @@
   border-radius: 999px; background: var(--cobalt); color: var(--on-cobalt); font-weight: 700; margin-bottom: var(--space-2);
 }
 .steps span { color: var(--ink-2); }
+.contact-address { display: flex; align-items: flex-start; gap: var(--space-2); margin-top: var(--space-2); color: var(--ink-2); }
+.contact-address .icon { flex: none; color: var(--gold-ink); margin-top: 3px; }
 .contact-card {
   margin-top: var(--space-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4);
   padding: var(--space-5); border-radius: var(--radius); background: var(--alabaster-2);
@@ -222,13 +234,13 @@
 /* ---- Product page ---- */
 .pdp .breadcrumbs { padding-top: var(--space-2); }
 .pdp-grid { display: grid; gap: var(--space-5); }
-/* Phones: a centred square, small enough that the price and the three size
-   buttons show on the first screen (the photo used to fill the whole width). */
+/* Same 10:9 framing as the cards (see .card-media). On phones a centred box,
+   small enough that the price and the three size buttons show on the first screen. */
 .pdp-frame {
-  aspect-ratio: 1 / 1; overflow: hidden; border-radius: var(--radius-l); background: var(--alabaster-2);
-  border: 1px solid var(--line); width: min(80%, 320px); margin-inline: auto; margin-top: var(--space-2);
+  aspect-ratio: 10 / 9; overflow: hidden; border-radius: var(--radius-l); background: var(--alabaster-2);
+  border: 1px solid var(--line); width: min(90%, 360px); margin-inline: auto; margin-top: var(--space-2);
 }
-.pdp-frame img, .pdp-frame svg { width: 100%; height: 100%; object-fit: cover; object-position: 30% 85%; }
+.pdp-frame img, .pdp-frame svg { width: 100%; height: 100%; object-fit: cover; object-position: 50% 90%; }
 .pdp-frame svg { object-position: 50% 50%; }
 .pdp-info { display: grid; gap: var(--space-2); align-content: start; min-width: 0; }
 .pdp-title { font-size: var(--step-3); line-height: 1.2; }
@@ -271,8 +283,7 @@
 @media (min-width: 900px) {
   .pdp-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-7); align-items: start; }
   .pdp-media { position: sticky; top: calc(var(--header-h) + var(--space-4)); }
-  .pdp-frame { aspect-ratio: 4 / 5; width: auto; margin: 0; }
-  .pdp-frame img { object-position: 50% 50%; }
+  .pdp-frame { width: auto; margin: 0; }
 }
 
 /* ---- Messages ---- */

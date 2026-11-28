@@ -7,12 +7,18 @@ function PageHeading(props) {
 }
 
 // ---------------- Home ----------------
-// "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي." counted from the catalog, so it stays
-// right as perfumes are added. Arabic counting: ٣–١٠ عطور, ١١ and up عطر.
-function perfumeCountLine() {
-  var women = productsIn("women").length, men = productsIn("men").length, all = women + men;
-  var noun = all >= 3 && all <= 10 ? "عطور" : "عطر";
-  return toAr(all) + " " + noun + " أو دو بارفان: " + toAr(women) + " حريمي و" + toAr(men) + " رجالي.";
+// A list's price, said once above it instead of on every card: "الأسعار من ٢٠٠ جنيه"
+// when all are perfumes, "١٠٠ جنيه للقطعة" when all share one price. Mixed lists
+// (a search across sections) return null, and their cards keep their own price.
+function groupPriceLine(items) {
+  var buyable = items.filter(function (p) { return p.available !== false; });
+  if (!buyable.length) return null;
+  if (buyable.every(function (p) { return p.sized; })) {
+    var lo = Math.min.apply(null, buyable.map(fromPrice));
+    return "الأسعار من " + money(lo, lo);
+  }
+  if (buyable.every(function (p) { return !p.sized; })) return priceLabel("std") + " للقطعة";
+  return null;
 }
 // The three sizes side by side, each bottle drawn at its real relative size
 // (height follows the cube root of the volume), with its price. The size with
@@ -36,6 +42,12 @@ function HomePage() {
   var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });
   return h("main", { id: "main", className: "home" },
     h("section", { className: "hero", "aria-labelledby": "hero-title" },
+      // Opening offer (OFFER in src/catalog.js); hides itself after its end date.
+      offerActive() && h("div", { className: "wrap" },
+        h("p", { className: "offer-strip" },
+          h(Icon, { name: "gift", size: 20 }),
+          h("span", null, h("b", null, offerTitle()), offerUntil() ? " " + offerUntil() : "",
+            h("span", { className: "offer-strip-note" }, "الخصم بيتحسب في الرد على طلبك على واتساب.")))),
       h("div", { className: "wrap hero-inner" },
         h("div", { className: "hero-media" },
           // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
@@ -61,9 +73,7 @@ function HomePage() {
 
     h("section", { className: "wrap section", "aria-labelledby": "featured-title", "data-reveal": "" },
       h("div", { className: "section-head" },
-        h("div", null,
-          h("h2", { id: "featured-title" }, "عطور كيميت"),
-          h("p", { className: "section-sub" }, perfumeCountLine())),
+        h("div", null, h("h2", { id: "featured-title" }, "عطور كيميت")),
         h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
       h("div", { className: "entry-tiles" },
         ["women", "men"].map(function (id) {
@@ -73,7 +83,7 @@ function HomePage() {
             h("span", { className: "entry-tile-media" }, h(ProductImage, { product: first, alt: "" })),
             h("span", { className: "entry-tile-text" },
               h("span", { className: "entry-tile-title" }, "عطور " + s.short),
-              h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),
+              h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور")),
             h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
         })),
       h(ProductGrid, { items: featured, columns: 4, hidePrice: true })),
@@ -118,7 +128,8 @@ function HomePage() {
       h("div", { className: "contact-card" },
         h("div", null,
           h("h3", null, "محتار تختار إيه؟"),
-          h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك.")),
+          h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك."),
+          h("p", { className: "contact-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, "المحل: " + SHOP_ADDRESS))),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
 }
 
@@ -195,14 +206,14 @@ function CollectionPage(props) {
         h("div", { className: "section-head" },
           h("div", null,
             h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
-            s.blurb && h("p", { className: "section-sub" }, s.blurb)),
+            groupPriceLine(items) && h("p", { className: "section-sub" }, groupPriceLine(items))),
           items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
-        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true }));
+        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true, hidePrice: !!groupPriceLine(items) }));
     });
   } else {
     body = h(Fragment, null,
-      section && section.blurb && h("p", { className: "section-sub" }, section.blurb),
-      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section }));
+      groupPriceLine(results) && h("p", { className: "section-sub" }, groupPriceLine(results)),
+      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section, hidePrice: !!groupPriceLine(results) }));
   }
 
   return h("main", { id: "main", className: "collection" },
@@ -271,7 +282,7 @@ function ProductPage(props) {
     shop.add(p, size, qty);
     setAdded(true);
   };
-  var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })()));
+  var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })())) + offerNote();
 
   return h("main", { id: "main", className: "pdp" },
     h("div", { className: "wrap" },
@@ -336,7 +347,7 @@ function ProductPage(props) {
         h("div", { className: "section-head" },
           h("h2", { id: "related-title" }, "من نفس القسم"),
           h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),
-        h(ProductGrid, { items: related, columns: 4, hideSection: true }))));
+        h(ProductGrid, { items: related, columns: 4, hideSection: true, hidePrice: true }))));
 }
 
 // ---------------- Not found ----------------

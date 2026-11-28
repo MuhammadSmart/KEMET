@@ -14279,6 +14279,16 @@ Error generating stack: ` + i.message + `
     
     var WA_NUMBER = "201154615084";
     
+    // The shop's address (footer and the homepage contact card).
+    var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
+    
+    // Opening offer. Announced on the homepage and in the basket, and added as a line
+    // to every WhatsApp order; prices on the site stay as they are and the shop takes
+    // the discount off when it replies. `endsOn` = the last day it applies
+    // ("YYYY-MM-DD"); after it the offer disappears by itself (null = no end date).
+    // Set percent to 0 to turn it off.
+    var OFFER = { label: "عرض الافتتاح", percent: 20, endsOn: null };
+    
     var SIZE_PRICES = {
       s30: { label: "٢٠٠ جنيه", value: 200 },
       s50: { label: "٣٥٠ - ٤٠٠ جنيه", value: 350, max: 400 },
@@ -14294,8 +14304,8 @@ Error generating stack: ` + i.message + `
     var DEFAULT_SIZE = "s50";
     
     var SECTIONS = [
-      { id: "women", title: "بيرفيوم حريمي", short: "حريمي", blurb: "عطور أو دو بارفان حريمي، كل عطر بـ٣ أحجام." },
-      { id: "men", title: "بيرفيوم رجالي", short: "رجالي", blurb: "عطور أو دو بارفان رجالي، كل عطر بـ٣ أحجام." },
+      { id: "women", title: "بيرفيوم حريمي", short: "حريمي" },
+      { id: "men", title: "بيرفيوم رجالي", short: "رجالي" },
       { id: "lotion", title: "لوشن", short: "لوشن" },
       { id: "musk", title: "مسك", short: "مسك" },
       { id: "freshener", title: "معطرات", short: "معطرات" },
@@ -14419,6 +14429,29 @@ Error generating stack: ` + i.message + `
     
     function money(lo, hi) {
       return lo === hi ? toAr(lo) + " جنيه" : toAr(lo) + " - " + toAr(hi) + " جنيه";
+    }
+    
+    var AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    function offerActive(now) {
+      if (!OFFER || !OFFER.percent) return false;
+      if (!OFFER.endsOn) return true;
+      var d = now || new Date();
+      var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+      return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) <= OFFER.endsOn;
+    }
+    // "عرض الافتتاح: خصم ٢٠٪ على كل المنتجات"
+    function offerTitle() {
+      return OFFER.label + ": خصم " + toAr(OFFER.percent) + "٪ على كل المنتجات";
+    }
+    // "لحد ٣١ ديسمبر" (empty when there is no end date)
+    function offerUntil() {
+      if (!OFFER.endsOn) return "";
+      var parts = OFFER.endsOn.split("-");
+      return "لحد " + toAr(+parts[2]) + " " + AR_MONTHS[+parts[1] - 1];
+    }
+    // Line added to WhatsApp orders while the offer runs, so the shop applies it.
+    function offerNote() {
+      return offerActive() ? "\n" + offerTitle() : "";
     }
     
     function waLink(text) {
@@ -14966,7 +14999,9 @@ Error generating stack: ` + i.message + `
         minus: "M5 12h14",
         truck: "M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.6 1.6 0 1 0 0-3.2A1.6 1.6 0 0 0 7 19zM17 19a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2z",
         info: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 11v5M12 8h.01",
-        swap: "M7 7h11l-3-3M17 17H6l3 3"
+        swap: "M7 7h11l-3-3M17 17H6l3 3",
+        pin: "M12 21s-6.5-5.8-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.2 12 21 12 21zM12 12.6a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z",
+        gift: "M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5.5-1.5S9.5 7 12 7zM12 7c1.5-3 5-3.5 5.5-1.5S14.5 7 12 7z"
       };
       return h("svg", { width: props.size || 22, height: props.size || 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: props.stroke || 1.7, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": "true", focusable: "false", className: "icon" + (props.className ? " " + props.className : "") },
         h("path", { d: paths[props.name] }));
@@ -15179,9 +15214,10 @@ Error generating stack: ` + i.message + `
             h("div", { className: "drawer-foot basket-foot" },
               h("p", { className: "basket-total" }, h("span", null, "الإجمالي"), h("b", null, money(totals.lo, totals.hi))),
               hasRange && h("p", { className: "fine" }, "سعر حجم ٥٠ مل بين ٣٥٠ و٤٠٠ جنيه، والمحل بيأكد السعر النهائي في الرد."),
+              offerActive() && h("p", { className: "offer-note" }, h(Icon, { name: "gift", size: 16 }), h("span", null, offerTitle() + ". بيتخصم من الإجمالي ده في الرد على طلبك.")),
               orderable.length > 0
                 ? h(WhatsAppLink, {
-                  message: orderMessage(orderable), className: "btn btn-primary btn-block",
+                  message: orderMessage(orderable) + offerNote(), className: "btn btn-primary btn-block",
                   event: { name: "whatsapp-order", data: { source: "basket", lines: orderable.length, items: totals.qty, total_min: totals.lo, total_max: totals.hi } }
                 }, "ابعت الطلب على واتساب")
                 : h("p", { className: "fine" }, "مفيش منتجات متاحة في السلة."),
@@ -15320,7 +15356,8 @@ Error generating stack: ` + i.message + `
           h("div", { className: "footer-contact" },
             h("p", null, "للطلب والاستفسار"),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
-            h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
+            h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)),
+            h("p", { className: "footer-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, SHOP_ADDRESS)))),
         h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
     }
     
@@ -15356,12 +15393,18 @@ Error generating stack: ` + i.message + `
     }
     
     // ---------------- Home ----------------
-    // "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي." counted from the catalog, so it stays
-    // right as perfumes are added. Arabic counting: ٣–١٠ عطور, ١١ and up عطر.
-    function perfumeCountLine() {
-      var women = productsIn("women").length, men = productsIn("men").length, all = women + men;
-      var noun = all >= 3 && all <= 10 ? "عطور" : "عطر";
-      return toAr(all) + " " + noun + " أو دو بارفان: " + toAr(women) + " حريمي و" + toAr(men) + " رجالي.";
+    // A list's price, said once above it instead of on every card: "الأسعار من ٢٠٠ جنيه"
+    // when all are perfumes, "١٠٠ جنيه للقطعة" when all share one price. Mixed lists
+    // (a search across sections) return null, and their cards keep their own price.
+    function groupPriceLine(items) {
+      var buyable = items.filter(function (p) { return p.available !== false; });
+      if (!buyable.length) return null;
+      if (buyable.every(function (p) { return p.sized; })) {
+        var lo = Math.min.apply(null, buyable.map(fromPrice));
+        return "الأسعار من " + money(lo, lo);
+      }
+      if (buyable.every(function (p) { return !p.sized; })) return priceLabel("std") + " للقطعة";
+      return null;
     }
     // The three sizes side by side, each bottle drawn at its real relative size
     // (height follows the cube root of the volume), with its price. The size with
@@ -15385,6 +15428,12 @@ Error generating stack: ` + i.message + `
       var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });
       return h("main", { id: "main", className: "home" },
         h("section", { className: "hero", "aria-labelledby": "hero-title" },
+          // Opening offer (OFFER in src/catalog.js); hides itself after its end date.
+          offerActive() && h("div", { className: "wrap" },
+            h("p", { className: "offer-strip" },
+              h(Icon, { name: "gift", size: 20 }),
+              h("span", null, h("b", null, offerTitle()), offerUntil() ? " " + offerUntil() : "",
+                h("span", { className: "offer-strip-note" }, "الخصم بيتحسب في الرد على طلبك على واتساب.")))),
           h("div", { className: "wrap hero-inner" },
             h("div", { className: "hero-media" },
               // Egyptian doorway: cavetto cornice + torus moulding over the photo frame.
@@ -15410,9 +15459,7 @@ Error generating stack: ` + i.message + `
     
         h("section", { className: "wrap section", "aria-labelledby": "featured-title", "data-reveal": "" },
           h("div", { className: "section-head" },
-            h("div", null,
-              h("h2", { id: "featured-title" }, "عطور كيميت"),
-              h("p", { className: "section-sub" }, perfumeCountLine())),
+            h("div", null, h("h2", { id: "featured-title" }, "عطور كيميت")),
             h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
           h("div", { className: "entry-tiles" },
             ["women", "men"].map(function (id) {
@@ -15422,7 +15469,7 @@ Error generating stack: ` + i.message + `
                 h("span", { className: "entry-tile-media" }, h(ProductImage, { product: first, alt: "" })),
                 h("span", { className: "entry-tile-text" },
                   h("span", { className: "entry-tile-title" }, "عطور " + s.short),
-                  h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),
+                  h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور")),
                 h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
             })),
           h(ProductGrid, { items: featured, columns: 4, hidePrice: true })),
@@ -15467,7 +15514,8 @@ Error generating stack: ` + i.message + `
           h("div", { className: "contact-card" },
             h("div", null,
               h("h3", null, "محتار تختار إيه؟"),
-              h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك.")),
+              h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك."),
+              h("p", { className: "contact-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, "المحل: " + SHOP_ADDRESS))),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
     }
     
@@ -15544,14 +15592,14 @@ Error generating stack: ` + i.message + `
             h("div", { className: "section-head" },
               h("div", null,
                 h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
-                s.blurb && h("p", { className: "section-sub" }, s.blurb)),
+                groupPriceLine(items) && h("p", { className: "section-sub" }, groupPriceLine(items))),
               items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
-            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true }));
+            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true, hidePrice: !!groupPriceLine(items) }));
         });
       } else {
         body = h(Fragment, null,
-          section && section.blurb && h("p", { className: "section-sub" }, section.blurb),
-          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section }));
+          groupPriceLine(results) && h("p", { className: "section-sub" }, groupPriceLine(results)),
+          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section, hidePrice: !!groupPriceLine(results) }));
       }
     
       return h("main", { id: "main", className: "collection" },
@@ -15620,7 +15668,7 @@ Error generating stack: ` + i.message + `
         shop.add(p, size, qty);
         setAdded(true);
       };
-      var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })()));
+      var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })())) + offerNote();
     
       return h("main", { id: "main", className: "pdp" },
         h("div", { className: "wrap" },
@@ -15685,7 +15733,7 @@ Error generating stack: ` + i.message + `
             h("div", { className: "section-head" },
               h("h2", { id: "related-title" }, "من نفس القسم"),
               h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),
-            h(ProductGrid, { items: related, columns: 4, hideSection: true }))));
+            h(ProductGrid, { items: related, columns: 4, hideSection: true, hidePrice: true }))));
     }
     
     // ---------------- Not found ----------------

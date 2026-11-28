@@ -163,6 +163,8 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .site-footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .footer-contact { display: grid; gap: var(--space-2); justify-items: start; }
 .footer-contact .fine { color: var(--on-cobalt-2); }
+.footer-address { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--on-cobalt-2); font-size: var(--step--1); }
+.footer-address .icon { flex: none; color: var(--gold-light); margin-top: 2px; }
 .footer-note { color: var(--on-cobalt-2); font-size: var(--step--1); border-top: 1px solid rgba(201, 211, 238, 0.25); padding-top: var(--space-4); }
 .site-footer :focus-visible { outline-color: var(--gold-light); }
 @media (min-width: 720px) {

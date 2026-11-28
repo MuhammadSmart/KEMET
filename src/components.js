@@ -205,9 +205,10 @@ function BasketDrawer(props) {
         h("div", { className: "drawer-foot basket-foot" },
           h("p", { className: "basket-total" }, h("span", null, "الإجمالي"), h("b", null, money(totals.lo, totals.hi))),
           hasRange && h("p", { className: "fine" }, "سعر حجم ٥٠ مل بين ٣٥٠ و٤٠٠ جنيه، والمحل بيأكد السعر النهائي في الرد."),
+          offerActive() && h("p", { className: "offer-note" }, h(Icon, { name: "gift", size: 16 }), h("span", null, offerTitle() + ". بيتخصم من الإجمالي ده في الرد على طلبك.")),
           orderable.length > 0
             ? h(WhatsAppLink, {
-              message: orderMessage(orderable), className: "btn btn-primary btn-block",
+              message: orderMessage(orderable) + offerNote(), className: "btn btn-primary btn-block",
               event: { name: "whatsapp-order", data: { source: "basket", lines: orderable.length, items: totals.qty, total_min: totals.lo, total_max: totals.hi } }
             }, "ابعت الطلب على واتساب")
             : h("p", { className: "fine" }, "مفيش منتجات متاحة في السلة."),
@@ -346,7 +347,8 @@ function Footer() {
       h("div", { className: "footer-contact" },
         h("p", null, "للطلب والاستفسار"),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
-        h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)))),
+        h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)),
+        h("p", { className: "footer-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, SHOP_ADDRESS)))),
     h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
 }
 

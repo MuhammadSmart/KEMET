@@ -14,6 +14,29 @@ function money(lo, hi) {
   return lo === hi ? toAr(lo) + " جنيه" : toAr(lo) + " - " + toAr(hi) + " جنيه";
 }
 
+var AR_MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+function offerActive(now) {
+  if (!OFFER || !OFFER.percent) return false;
+  if (!OFFER.endsOn) return true;
+  var d = now || new Date();
+  var pad = function (n) { return (n < 10 ? "0" : "") + n; };
+  return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) <= OFFER.endsOn;
+}
+// "عرض الافتتاح: خصم ٢٠٪ على كل المنتجات"
+function offerTitle() {
+  return OFFER.label + ": خصم " + toAr(OFFER.percent) + "٪ على كل المنتجات";
+}
+// "لحد ٣١ ديسمبر" (empty when there is no end date)
+function offerUntil() {
+  if (!OFFER.endsOn) return "";
+  var parts = OFFER.endsOn.split("-");
+  return "لحد " + toAr(+parts[2]) + " " + AR_MONTHS[+parts[1] - 1];
+}
+// Line added to WhatsApp orders while the offer runs, so the shop applies it.
+function offerNote() {
+  return offerActive() ? "\n" + offerTitle() : "";
+}
+
 function waLink(text) {
   return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
 }

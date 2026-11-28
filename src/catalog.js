@@ -12,6 +12,16 @@
 
 var WA_NUMBER = "201154615084";
 
+// The shop's address (footer and the homepage contact card).
+var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
+
+// Opening offer. Announced on the homepage and in the basket, and added as a line
+// to every WhatsApp order; prices on the site stay as they are and the shop takes
+// the discount off when it replies. `endsOn` = the last day it applies
+// ("YYYY-MM-DD"); after it the offer disappears by itself (null = no end date).
+// Set percent to 0 to turn it off.
+var OFFER = { label: "عرض الافتتاح", percent: 20, endsOn: null };
+
 var SIZE_PRICES = {
   s30: { label: "٢٠٠ جنيه", value: 200 },
   s50: { label: "٣٥٠ - ٤٠٠ جنيه", value: 350, max: 400 },
@@ -27,8 +37,8 @@ var PERFUME_SIZES = [
 var DEFAULT_SIZE = "s50";
 
 var SECTIONS = [
-  { id: "women", title: "بيرفيوم حريمي", short: "حريمي", blurb: "عطور أو دو بارفان حريمي، كل عطر بـ٣ أحجام." },
-  { id: "men", title: "بيرفيوم رجالي", short: "رجالي", blurb: "عطور أو دو بارفان رجالي، كل عطر بـ٣ أحجام." },
+  { id: "women", title: "بيرفيوم حريمي", short: "حريمي" },
+  { id: "men", title: "بيرفيوم رجالي", short: "رجالي" },
   { id: "lotion", title: "لوشن", short: "لوشن" },
   { id: "musk", title: "مسك", short: "مسك" },
   { id: "freshener", title: "معطرات", short: "معطرات" },
