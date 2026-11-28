@@ -168,7 +168,7 @@ function ScentProfile(props) {
         h("dl", null, explained.map(function (n) {
           return h("div", { key: n }, h("dt", null, n), h("dd", null, NOTE_GLOSSARY[n]));
         })))),
-    h(WhatsAppLink, { message: scentQuestion(p), className: "btn btn-secondary scent-ask", event: { name: "whatsapp-question", data: { topic: "scent", product: p.id } } }, "عندك سؤال عن الريحة؟"));
+    h(MatchBox, { product: p, compact: true }));
 }
 
 // ---------------- Collection ----------------
@@ -246,12 +246,14 @@ function CollectionPage(props) {
             h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
             groupPriceLine(items) && h("p", { className: "section-sub" }, groupPriceLine(items))),
           items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
-        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true, hidePrice: !!groupPriceLine(items) }));
+        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true, hidePrice: !!groupPriceLine(items) }),
+        s.id === "men" && h(MatchBox, null));
     });
   } else {
     body = h(Fragment, null,
       groupPriceLine(results) && h("p", { className: "section-sub" }, groupPriceLine(results)),
-      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section, hidePrice: !!groupPriceLine(results) }));
+      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section, hidePrice: !!groupPriceLine(results) }),
+      section && (section.id === "women" || section.id === "men") && h(MatchBox, null));
   }
 
   return h("main", { id: "main", className: "collection" },
@@ -280,6 +282,39 @@ function CollectionPage(props) {
         })),
         h(Link, { to: "#/collection", className: "text-link" }, "امسح الكل")),
       body));
+}
+
+// "بتحب عطر معين؟": the shopper types a perfume they like and asks on WhatsApp
+// which KEMET perfume is closest. No brand names are written on the site; the
+// shop answers in the chat. Used on the collection page and the product page.
+function MatchBox(props) {
+  var _t = useState(""), text = _t[0], setText = _t[1];
+  var inputId = useId();
+  var p = props.product;
+  var name = text.trim();
+  var message = name
+    ? (p ? "أهلاً، أنا بحب ريحة «" + name + "»، هل " + p.name + " قريب منها؟ ولو لأ، إيه الأقرب ليها عندكم؟"
+         : "أهلاً، أنا بحب ريحة «" + name + "»، إيه الأقرب ليها من عطور كيميت؟")
+    : "أهلاً، عايز ترشيح لعطر من كيميت قريب من عطر بحبه.";
+  var link = waLink(message);
+  var send = function () { trackEvent("whatsapp-question", { topic: "match", typed: !!name }); };
+  return h("form", {
+    className: "match-box" + (props.compact ? " match-box-compact" : ""),
+    onSubmit: function (e) { e.preventDefault(); send(); window.open(link, "_blank", "noopener"); }
+  },
+    h("div", { className: "match-box-head" },
+      h(Lotus, { size: 34, className: "match-box-icon" }),
+      h("div", null,
+        h(props.compact ? "h3" : "h2", { className: "match-box-title" }, "بتحب عطر معين؟"),
+        h("p", null, p
+          ? "اكتب اسم العطر اللي بتحبه، ونقولك على واتساب إذا كان " + p.name + " قريب منه، أو نرشحلك الأقرب."
+          : "اكتب اسم العطر اللي بتحبه، ونرشحلك على واتساب الأقرب ليه من عطور كيميت."))),
+    h("div", { className: "match-box-row" },
+      h("label", { htmlFor: inputId, className: "sr-only" }, "اسم العطر اللي بتحبه"),
+      h("input", { id: inputId, type: "text", value: text, placeholder: "اسم العطر اللي بتحبه", autoComplete: "off", enterKeyHint: "send",
+        onChange: function (e) { setText(e.target.value); } }),
+      h("a", { className: "btn btn-primary", href: link, target: "_blank", rel: "noopener noreferrer", onClick: send },
+        h(Icon, { name: "chat" }), h("span", null, "رشّحلي"), h("span", { className: "sr-only" }, " (بيفتح واتساب)"))));
 }
 
 function SetsCard() {

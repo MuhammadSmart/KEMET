@@ -316,3 +316,24 @@
 /* ---- Messages ---- */
 .page-msg { display: grid; gap: var(--space-4); justify-items: start; padding-block: var(--space-7); }
 .page-msg h1 { font-size: var(--step-3); }
+
+/* "بتحب عطر معين؟" box (MatchBox in src/pages.js). */
+.match-box {
+  display: grid; gap: var(--space-4); margin-top: var(--space-6); padding: var(--space-5);
+  border-radius: var(--radius); background: var(--cobalt-deep); color: var(--on-cobalt);
+  border: 1px solid var(--gold);
+}
+.match-box-head { display: flex; gap: var(--space-3); align-items: flex-start; }
+.match-box-icon { flex: none; color: var(--gold-light); }
+.match-box-title { font-size: var(--step-2); color: var(--gold-light); margin: 0 0 var(--space-1); }
+.match-box p { color: var(--on-cobalt-2); margin: 0; max-width: 52ch; }
+.match-box-row { display: grid; gap: var(--space-2); }
+.match-box input {
+  min-height: 48px; padding: 0 var(--space-4); border-radius: 999px; border: 1px solid var(--gold-light);
+  background: var(--surface); color: var(--ink); font: inherit;
+}
+.match-box .btn-primary { background: var(--gold-light); color: var(--cobalt-deep); border-color: var(--gold-light); }
+.match-box :focus-visible { outline-color: var(--gold-light); }
+@media (min-width: 560px) { .match-box-row { grid-template-columns: 1fr auto; } }
+.match-box-compact { margin-top: 0; }
+.match-box-compact .match-box-title { font-size: var(--step-1); }
