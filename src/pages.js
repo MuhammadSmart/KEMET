@@ -229,7 +229,12 @@ function CollectionPage(props) {
   if (q) active.push({ label: "«" + q + "»", to: collectionHash(route.section, "", family), remove: "امسح البحث" });
 
   var body;
-  if (results.length === 0 && (!section || section.id !== "sets")) {
+  var searchMatch = results.length === 0 && q ? matchPerfume(q) : null;
+  if (searchMatch) {
+    body = h("div", { className: "search-match" },
+      h("h2", null, "الأقرب لـ«" + q + "» عندنا"),
+      h(MatchResult, { match: searchMatch, from: "search", noKicker: true }));
+  } else if (results.length === 0 && (!section || section.id !== "sets")) {
     body = h("div", { className: "empty-state" },
       h(Lotus, { size: 40, className: "muted-motif" }),
       h("h2", null, "مفيش نتايج", q ? " لـ«" + q + "»" : ""),
@@ -287,34 +292,66 @@ function CollectionPage(props) {
 // "بتحب عطر معين؟": the shopper types a perfume they like and asks on WhatsApp
 // which KEMET perfume is closest. No brand names are written on the site; the
 // shop answers in the chat. Used on the collection page and the product page.
+// "بتحب عطر معين؟": a shopper types a perfume they like. If the name is one we
+// know (SCENT_MATCH, stored as hashes so no brand name is written in the site),
+// the box shows our closest perfume right away; otherwise it asks on WhatsApp.
+var MATCH_NOTE = "الترشيح على أساس الريحة والتونات. عطور كيميت منتجات مستقلة ومالهاش علاقة بأي ماركة تانية.";
+
+function MatchResult(props) {
+  var m = props.match;
+  var fam = m.family ? familyById(m.family) : null;
+  var self = props.current && props.current.id === m.id;
+  return h("div", { className: "match-result" },
+    h("div", { className: "match-result-media" }, h(ProductImage, { product: m, alt: "" })),
+    h("div", { className: "match-result-body" },
+      !props.noKicker && h("p", { className: "match-result-kicker" }, self ? "ده الأقرب ليه عندنا" : "الأقرب ليه عندنا"),
+      h("p", { className: "match-result-name" }, m.name, fam && h("span", { className: "match-result-family" }, " · " + fam.title)),
+      m.character && h("p", { className: "match-result-character" }, m.character),
+      !self && h(Link, { to: productHash(m.id), className: "match-result-link", onClick: function () { trackEvent("match-open", { product: m.id, from: props.from || "box" }); } },
+        "اعرف أكتر عن " + m.name, h(Icon, { name: "chevron", size: 16 }))),
+    h("p", { className: "match-result-note" }, MATCH_NOTE));
+}
+
 function MatchBox(props) {
   var _t = useState(""), text = _t[0], setText = _t[1];
   var inputId = useId();
   var p = props.product;
   var name = text.trim();
+  var match = name ? matchPerfume(name) : null;
   var message = name
-    ? (p ? "أهلاً، أنا بحب ريحة «" + name + "»، هل " + p.name + " قريب منها؟ ولو لأ، إيه الأقرب ليها عندكم؟"
+    ? (match ? "أهلاً، أنا بحب ريحة «" + name + "»، والموقع رشّحلي " + match.name + ". ممكن أعرف عنه أكتر؟"
+      : p ? "أهلاً، أنا بحب ريحة «" + name + "»، هل " + p.name + " قريب منها؟ ولو لأ، إيه الأقرب ليها عندكم؟"
          : "أهلاً، أنا بحب ريحة «" + name + "»، إيه الأقرب ليها من عطور كيميت؟")
     : "أهلاً، عايز ترشيح لعطر من كيميت قريب من عطر بحبه.";
   var link = waLink(message);
-  var send = function () { trackEvent("whatsapp-question", { topic: "match", typed: !!name }); };
+  var send = function () { trackEvent("whatsapp-question", { topic: "match", typed: !!name, matched: match ? match.id : "" }); };
+  // Count a match once the shopper stops typing (the product only, never the typed text).
+  var matchId = match ? match.id : "";
+  useEffect(function () {
+    if (!matchId) return;
+    var t = setTimeout(function () { trackEvent("match", { product: matchId, from: p ? "product" : "list" }); }, 1500);
+    return function () { clearTimeout(t); };
+  }, [matchId]);
   return h("form", {
     className: "match-box" + (props.compact ? " match-box-compact" : ""),
-    onSubmit: function (e) { e.preventDefault(); send(); window.open(link, "_blank", "noopener"); }
+    onSubmit: function (e) {
+      e.preventDefault();
+      if (match && !(p && p.id === match.id)) { trackEvent("match-open", { product: match.id, from: "enter" }); navigate(productHash(match.id)); return; }
+      send(); window.open(link, "_blank", "noopener");
+    }
   },
     h("div", { className: "match-box-head" },
       h(Lotus, { size: 34, className: "match-box-icon" }),
       h("div", null,
         h(props.compact ? "h3" : "h2", { className: "match-box-title" }, "بتحب عطر معين؟"),
-        h("p", null, p
-          ? "اكتب اسم العطر اللي بتحبه، ونقولك على واتساب إذا كان " + p.name + " قريب منه، أو نرشحلك الأقرب."
-          : "اكتب اسم العطر اللي بتحبه، ونرشحلك على واتساب الأقرب ليه من عطور كيميت."))),
+        h("p", null, "اكتب اسم العطر اللي بتحبه، ونقولك الأقرب ليه من عطور كيميت."))),
     h("div", { className: "match-box-row" },
       h("label", { htmlFor: inputId, className: "sr-only" }, "اسم العطر اللي بتحبه"),
-      h("input", { id: inputId, type: "text", value: text, placeholder: "اسم العطر اللي بتحبه", autoComplete: "off", enterKeyHint: "send",
+      h("input", { id: inputId, type: "text", value: text, placeholder: "اسم العطر اللي بتحبه", autoComplete: "off", enterKeyHint: match ? "go" : "send",
         onChange: function (e) { setText(e.target.value); } }),
-      h("a", { className: "btn btn-primary", href: link, target: "_blank", rel: "noopener noreferrer", onClick: send },
-        h(Icon, { name: "chat" }), h("span", null, "رشّحلي"), h("span", { className: "sr-only" }, " (بيفتح واتساب)"))));
+      h("a", { className: "btn " + (match ? "btn-secondary" : "btn-primary"), href: link, target: "_blank", rel: "noopener noreferrer", onClick: send },
+        h(Icon, { name: "chat" }), h("span", null, match ? "اسأل على واتساب" : "رشّحلي"), h("span", { className: "sr-only" }, " (بيفتح واتساب)"))),
+    h("div", { "aria-live": "polite" }, match && h(MatchResult, { match: match, current: p })));
 }
 
 function SetsCard() {

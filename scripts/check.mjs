@@ -37,7 +37,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
-  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, SCENT_MATCH, matchPerfume, matchHash, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -173,6 +173,17 @@ await test("scent profiles: known products, accords and families, every note exp
     const notes = [].concat(prof.notes.top || [], prof.notes.heart || [], prof.notes.base || []);
     const missing = notes.filter((n) => !K.NOTE_GLOSSARY[n]);
     assert.deepEqual(missing, [], `${id}: notes without a plain-language description`);
+  }
+});
+
+await test("perfume matching: hashed keys only, every match is a real product", () => {
+  for (const [key, id] of Object.entries(K.SCENT_MATCH)) {
+    assert.match(key, /^[0-9a-f]{8}$/, `${key}: keys are hashes, never readable names`);
+    assert.ok(K.products.some((p) => p.id === id && p.sized), `${key}: no such perfume ${id}`);
+  }
+  // Ordinary words and our own names don't match anything.
+  for (const text of ["", "عطر حلو", "عايز حاجة فريش للصيف", "perfume", ...K.products.map((p) => p.name)]) {
+    assert.equal(K.matchPerfume(text), null, `"${text}" should not match`);
   }
 });
 

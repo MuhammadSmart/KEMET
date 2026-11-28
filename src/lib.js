@@ -49,6 +49,34 @@ function waLink(text) {
   return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
 }
 
+// ---- Scent matching: a perfume name a shopper types -> the closest KEMET perfume ----
+// Names are compared as short hashes (SCENT_MATCH in src/catalog.js), so other
+// brands' names never appear in the site's files. Spelling is normalised first
+// (Arabic letter forms, accents, case, spaces), and every run of 1-3 words is
+// tried, longest first, so "اسم + اسم الماركة" and the name alone both match.
+function matchHash(s) {
+  var h = 0x811c9dc5;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return ("0000000" + h.toString(16)).slice(-8);
+}
+function matchWords(text) {
+  var plain = normalizeAr(String(text).normalize("NFD").replace(/[̀-ͯ]/g, ""));
+  return plain.split(/[^0-9a-zء-ي]+/).filter(Boolean);
+}
+function matchPerfume(text) {
+  var words = matchWords(text);
+  var runs = [];
+  for (var i = 0; i < words.length; i++) {
+    for (var j = i + 1; j <= Math.min(words.length, i + 3); j++) runs.push(words.slice(i, j).join(""));
+  }
+  runs.sort(function (a, b) { return b.length - a.length; });
+  for (var k = 0; k < runs.length; k++) {
+    var id = SCENT_MATCH[matchHash(runs[k])];
+    if (id && productById(id)) return productById(id);
+  }
+  return null;
+}
+
 function productById(id) {
   return products.find(function (p) { return p.id === id; }) || null;
 }
