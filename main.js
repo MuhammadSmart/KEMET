@@ -15229,14 +15229,19 @@ Error generating stack: ` + i.message + `
       var fam = p.family ? familyById(p.family) : null;
       var Heading = props.headingLevel || "h3";
       var unavailable = p.available === false;
+      // Cards say only what differs between products. Sizes are on the homepage
+      // shelf and every product page, so they show here only when some are missing.
+      // The section ("حريمي") shows only in lists that mix sections.
+      var kicker = fam ? fam.title : (props.hideSection ? null : sectionById(p.section).short);
+      var allSizes = p.sized && PERFUME_SIZES.every(function (s) { return isSizeAvailable(p, s.key); });
       return h("article", { className: "card" + (unavailable ? " is-unavailable" : "") },
         h("div", { className: "card-media" }, h(ProductImage, { product: p, alt: "" })),
         h("div", { className: "card-body" },
-          h("p", { className: "card-kicker" }, fam ? fam.title : sectionById(p.section).short, p.sized ? " · أو دو بارفان" : ""),
+          kicker && h("p", { className: "card-kicker" }, kicker),
           h(Heading, { className: "card-title" }, h(Link, { to: productHash(p.id), className: "stretched" }, p.name)),
           p.character && h("p", { className: "card-character" }, p.character),
-          p.sized && h("p", { className: "card-sizes" }, sizesSummary(p)),
-          h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel("std"))),
+          p.sized && !allSizes && !unavailable && h("p", { className: "card-sizes" }, "متاح " + sizesSummary(p)),
+          (!props.hidePrice || unavailable) && h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel("std"))),
           !p.sized && !unavailable && h("button", {
             type: "button", className: "btn btn-quiet btn-small card-add",
             onClick: function () { shop.add(p, "std", 1); },
@@ -15246,7 +15251,7 @@ Error generating stack: ` + i.message + `
     
     function ProductGrid(props) {
       return h("ul", { className: "product-grid" + (props.columns === 4 ? " product-grid-4" : ""), role: "list" }, props.items.map(function (p) {
-        return h("li", { key: p.id }, h(ProductCard, { product: p, headingLevel: props.headingLevel }));
+        return h("li", { key: p.id }, h(ProductCard, { product: p, headingLevel: props.headingLevel, hideSection: props.hideSection, hidePrice: props.hidePrice }));
       }));
     }
     
@@ -15418,16 +15423,20 @@ Error generating stack: ` + i.message + `
                   h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),
                 h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
             })),
-          h(ProductGrid, { items: featured, columns: 4 })),
+          h(ProductGrid, { items: featured, columns: 4, hidePrice: true })),
     
         h("section", { className: "wrap section", "aria-labelledby": "more-title", "data-reveal": "" },
           h("h2", { id: "more-title" }, "كمان في كيميت"),
-          h("ul", { className: "section-links", role: "list" }, others.map(function (s) {
-            var n = productsIn(s.id).length;
-            return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id) },
-              h("span", null, s.title),
-              h("span", { className: "section-links-count" }, n > 0 ? toAr(n) + " منتجات" : "اسأل على واتساب"),
-              h(Icon, { name: "chevron", size: 18 })));
+          // One tile per section, drawn with the section's own product art.
+          h("ul", { className: "cat-tiles", role: "list" }, others.map(function (s) {
+            var items = productsIn(s.id);
+            var first = items[0];
+            return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id), className: "cat-tile" },
+              h("span", { className: "cat-media", "aria-hidden": "true" }, first
+                ? h(ProductArt, { product: { id: "cat-" + s.id, name: s.title, art: first.art }, label: "", suffix: "" })
+                : h(Lotus, { size: 64 })),
+              h("span", { className: "cat-name" }, s.title),
+              h("span", { className: "cat-sub" }, items.length > 0 ? toAr(items.length) + " منتجات" : "اسأل على واتساب")));
           }))),
     
         h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },
@@ -15535,12 +15544,12 @@ Error generating stack: ` + i.message + `
                 h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
                 s.blurb && h("p", { className: "section-sub" }, s.blurb)),
               items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
-            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items }));
+            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true }));
         });
       } else {
         body = h(Fragment, null,
           section && section.blurb && h("p", { className: "section-sub" }, section.blurb),
-          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2" }));
+          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section }));
       }
     
       return h("main", { id: "main", className: "collection" },
@@ -15669,7 +15678,7 @@ Error generating stack: ` + i.message + `
             h("div", { className: "section-head" },
               h("h2", { id: "related-title" }, "من نفس القسم"),
               h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),
-            h(ProductGrid, { items: related, columns: 4 }))));
+            h(ProductGrid, { items: related, columns: 4, hideSection: true }))));
     }
     
     // ---------------- Not found ----------------

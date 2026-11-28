@@ -588,18 +588,23 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .entry-tile-title { font-size: var(--step-1); font-weight: 700; }
 .entry-tile-sub { color: var(--ink-2); font-size: var(--step--1); }
 .entry-tile-arrow { color: var(--cobalt); }
-[dir="ltr"] .entry-tile-arrow, [dir="ltr"] .section-links .icon { transform: scaleX(-1); }
+[dir="ltr"] .entry-tile-arrow { transform: scaleX(-1); }
 
 /* ---- Other sections list ---- */
-.section-links { display: grid; gap: 0; border-top: 1px solid var(--line); }
-@media (min-width: 720px) { .section-links { grid-template-columns: 1fr 1fr; column-gap: var(--space-6); } }
-.section-links a {
-  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--space-3);
-  min-height: 60px; border-bottom: 1px solid var(--line); text-decoration: none; font-weight: 600;
+/* "كمان في كيميت": a tile per section, drawn on cobalt like the product art. */
+.cat-tiles { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4) var(--space-2); }
+@media (min-width: 1024px) { .cat-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.cat-tile { display: grid; gap: 2px; text-decoration: none; color: inherit; }
+.cat-media {
+  display: grid; place-items: center; aspect-ratio: 1 / 1; overflow: hidden; margin-bottom: var(--space-2);
+  border-radius: var(--radius); border: 1px solid var(--line); background: #13285f; color: var(--gold-light);
 }
-.section-links a:hover span:first-child { color: var(--cobalt); text-decoration: underline; text-underline-offset: 4px; }
-.section-links-count { color: var(--ink-2); font-weight: 400; font-size: var(--step--1); }
-.section-links .icon { color: var(--gold-ink); }
+.cat-media .product-art { width: 100%; height: 100%; transition: transform 400ms ease; }
+.cat-name { font-family: var(--font-display); font-size: var(--step-0); font-weight: 600; line-height: 1.3; }
+@media (min-width: 720px) { .cat-tiles { gap: var(--space-4) var(--space-3); } .cat-name { font-size: var(--step-1); } }
+.cat-sub { font-size: var(--step--1); color: var(--ink-2); }
+.cat-tile:hover .cat-name { color: var(--cobalt); text-decoration: underline; text-underline-offset: 4px; }
+.cat-tile:hover .product-art { transform: scale(1.04); }
 
 /* ---- Story (cobalt focal band) ---- */
 .story { background: var(--cobalt-deep); color: var(--on-cobalt); margin-block: var(--space-6) 0; scroll-margin-top: var(--header-h); }

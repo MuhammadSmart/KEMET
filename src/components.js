@@ -257,14 +257,19 @@ function ProductCard(props) {
   var fam = p.family ? familyById(p.family) : null;
   var Heading = props.headingLevel || "h3";
   var unavailable = p.available === false;
+  // Cards say only what differs between products. Sizes are on the homepage
+  // shelf and every product page, so they show here only when some are missing.
+  // The section ("حريمي") shows only in lists that mix sections.
+  var kicker = fam ? fam.title : (props.hideSection ? null : sectionById(p.section).short);
+  var allSizes = p.sized && PERFUME_SIZES.every(function (s) { return isSizeAvailable(p, s.key); });
   return h("article", { className: "card" + (unavailable ? " is-unavailable" : "") },
     h("div", { className: "card-media" }, h(ProductImage, { product: p, alt: "" })),
     h("div", { className: "card-body" },
-      h("p", { className: "card-kicker" }, fam ? fam.title : sectionById(p.section).short, p.sized ? " · أو دو بارفان" : ""),
+      kicker && h("p", { className: "card-kicker" }, kicker),
       h(Heading, { className: "card-title" }, h(Link, { to: productHash(p.id), className: "stretched" }, p.name)),
       p.character && h("p", { className: "card-character" }, p.character),
-      p.sized && h("p", { className: "card-sizes" }, sizesSummary(p)),
-      h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel("std"))),
+      p.sized && !allSizes && !unavailable && h("p", { className: "card-sizes" }, "متاح " + sizesSummary(p)),
+      (!props.hidePrice || unavailable) && h("p", { className: "card-price" }, unavailable ? "غير متاح حاليًا" : (p.sized ? "من " + money(fromPrice(p), fromPrice(p)) : priceLabel("std"))),
       !p.sized && !unavailable && h("button", {
         type: "button", className: "btn btn-quiet btn-small card-add",
         onClick: function () { shop.add(p, "std", 1); },
@@ -274,7 +279,7 @@ function ProductCard(props) {
 
 function ProductGrid(props) {
   return h("ul", { className: "product-grid" + (props.columns === 4 ? " product-grid-4" : ""), role: "list" }, props.items.map(function (p) {
-    return h("li", { key: p.id }, h(ProductCard, { product: p, headingLevel: props.headingLevel }));
+    return h("li", { key: p.id }, h(ProductCard, { product: p, headingLevel: props.headingLevel, hideSection: props.hideSection, hidePrice: props.hidePrice }));
   }));
 }
 

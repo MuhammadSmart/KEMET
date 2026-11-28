@@ -76,16 +76,20 @@ function HomePage() {
               h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),
             h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
         })),
-      h(ProductGrid, { items: featured, columns: 4 })),
+      h(ProductGrid, { items: featured, columns: 4, hidePrice: true })),
 
     h("section", { className: "wrap section", "aria-labelledby": "more-title", "data-reveal": "" },
       h("h2", { id: "more-title" }, "كمان في كيميت"),
-      h("ul", { className: "section-links", role: "list" }, others.map(function (s) {
-        var n = productsIn(s.id).length;
-        return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id) },
-          h("span", null, s.title),
-          h("span", { className: "section-links-count" }, n > 0 ? toAr(n) + " منتجات" : "اسأل على واتساب"),
-          h(Icon, { name: "chevron", size: 18 })));
+      // One tile per section, drawn with the section's own product art.
+      h("ul", { className: "cat-tiles", role: "list" }, others.map(function (s) {
+        var items = productsIn(s.id);
+        var first = items[0];
+        return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id), className: "cat-tile" },
+          h("span", { className: "cat-media", "aria-hidden": "true" }, first
+            ? h(ProductArt, { product: { id: "cat-" + s.id, name: s.title, art: first.art }, label: "", suffix: "" })
+            : h(Lotus, { size: 64 })),
+          h("span", { className: "cat-name" }, s.title),
+          h("span", { className: "cat-sub" }, items.length > 0 ? toAr(items.length) + " منتجات" : "اسأل على واتساب")));
       }))),
 
     h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },
@@ -193,12 +197,12 @@ function CollectionPage(props) {
             h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
             s.blurb && h("p", { className: "section-sub" }, s.blurb)),
           items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
-        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items }));
+        s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items, hideSection: true }));
     });
   } else {
     body = h(Fragment, null,
       section && section.blurb && h("p", { className: "section-sub" }, section.blurb),
-      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2" }));
+      section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2", hideSection: !!section }));
   }
 
   return h("main", { id: "main", className: "collection" },
@@ -327,7 +331,7 @@ function ProductPage(props) {
         h("div", { className: "section-head" },
           h("h2", { id: "related-title" }, "من نفس القسم"),
           h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),
-        h(ProductGrid, { items: related, columns: 4 }))));
+        h(ProductGrid, { items: related, columns: 4, hideSection: true }))));
 }
 
 // ---------------- Not found ----------------
