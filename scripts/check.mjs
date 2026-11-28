@@ -37,7 +37,7 @@ const sandbox = {
 };
 vm.createContext(sandbox);
 const code = (await read("src/catalog.js")) + "\n" + (await read("src/lib.js")) + "\n" + (await read("src/analytics.js")) +
-  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, SCENT_MATCH, matchPerfume, matchHash, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
+  "\n;globalThis.__k = { ANALYTICS, analyticsUrl, OFFER, offerActive, offerNote, offerUntil, SCENT_PROFILES, SCENT_MATCH, matchPerfume, NOTE_GLOSSARY, ACCORDS, SCENT_FAMILIES, products, SECTIONS, SIZE_PRICES, PERFUME_SIZES, WA_NUMBER, orderMessage, basketEntries, sanitizeBasket, parseRoute, collectionHash, money, toAr, priceRange, perMlLabel, defaultSize };";
 vm.runInContext(code, sandbox);
 const K = sandbox.__k;
 
@@ -176,14 +176,27 @@ await test("scent profiles: known products, accords and families, every note exp
   }
 });
 
-await test("perfume matching: hashed keys only, every match is a real product", () => {
-  for (const [key, id] of Object.entries(K.SCENT_MATCH)) {
-    assert.match(key, /^[0-9a-f]{8}$/, `${key}: keys are hashes, never readable names`);
-    assert.ok(K.products.some((p) => p.id === id && p.sized), `${key}: no such perfume ${id}`);
+await test("perfume matching: hashed keys only, real products, everyday words match nothing", () => {
+  for (const [key, value] of Object.entries(K.SCENT_MATCH)) {
+    assert.match(key, /^[0-9a-f]{12}$/, `${key}: keys are hashes, never readable names`);
+    for (const id of value.replace(/^[*]/, "").split(" "))
+      assert.ok(K.products.some((p) => p.id === id && p.sized), `${key}: no such perfume ${id}`);
   }
-  // Ordinary words and our own names don't match anything.
-  for (const text of ["", "عطر حلو", "عايز حاجة فريش للصيف", "perfume", ...K.products.map((p) => p.name)]) {
-    assert.equal(K.matchPerfume(text), null, `"${text}" should not match`);
+  // Our own names, every note and scent word, and everyday requests (exact or one
+  // letter off) must not be mistaken for a famous perfume.
+  const everyday = [
+    "", "عطر حلو", "عايز حاجة فريش للصيف", "بدور على عطر رجالي", "عايز هدية لمراتي", "عندكم عطر ثابت وفواح؟",
+    "ريحة نضيفة للشغل", "حاجة تقيلة للشتا", "عطر للسهرة", "بكام الزجاجة", "سعر ١٠٠ مل", "توصيل لحد البيت",
+    "مسك", "عود", "عنبر", "ورد", "فانيليا", "دهن عود", "بخور", "مسك الطهارة", "معطر جو", "بودي سبلاش", "لوشن",
+    "perfume", "fresh", "sweet", "oud", "musk", "vanilla", "gift", "summer", "winter", "men", "women",
+    ...K.products.map((p) => p.name),
+    ...Object.keys(K.NOTE_GLOSSARY),
+    ...Object.values(K.ACCORDS).map((a) => a.title),
+    ...K.SCENT_FAMILIES.map((f) => f.title),
+  ];
+  for (const text of everyday) {
+    const r = K.matchPerfume(text);
+    assert.equal(r, null, `"${text}" should not match (got ${r && r.items.map((p) => p.id)})`);
   }
 });
 

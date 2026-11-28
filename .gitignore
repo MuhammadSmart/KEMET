@@ -3,3 +3,6 @@ fixtures.js
 node_modules/
 demo.html
 demo.js
+
+# Private: famous perfume names -> our closest perfume (never committed)
+private/

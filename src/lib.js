@@ -49,32 +49,73 @@ function waLink(text) {
   return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
 }
 
-// ---- Scent matching: a perfume name a shopper types -> the closest KEMET perfume ----
-// Names are compared as short hashes (SCENT_MATCH in src/catalog.js), so other
-// brands' names never appear in the site's files. Spelling is normalised first
-// (Arabic letter forms, accents, case, spaces), and every run of 1-3 words is
-// tried, longest first, so "اسم + اسم الماركة" and the name alone both match.
+// "بتحب عطر معين؟": what a shopper types is matched against SCENT_MATCH.
+// Words are reduced to a spelling-neutral form (Arabic letter forms, ص/س, ق/ك,
+// ch/sh, c/k, doubled letters...), every run of 1-3 words is tried, and if no
+// name matches exactly, one wrong, missing, extra or swapped letter is allowed
+// in names of 5+ letters. Keys are hashes, so the names never appear in the site.
+var MATCH_AR = { "ص": "س", "ث": "س", "ط": "ت", "ذ": "ز", "ظ": "ز", "ض": "د", "ق": "ك", "گ": "ك", "چ": "ج", "ڤ": "ف", "پ": "ب", "ء": "" };
+var MATCH_LETTERS = { ar: "ابتجحخدرزسشعغفكلمنهوي", la: "abdefghijklmnoprstuv" };
 function matchHash(s) {
-  var h = 0x811c9dc5;
-  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
-  return ("0000000" + h.toString(16)).slice(-8);
+  var a = 0x811c9dc5, b = 0x811c9dc5, n = s.length;
+  for (var i = 0; i < n; i++) {
+    a ^= s.charCodeAt(i); a = Math.imul(a, 0x01000193) >>> 0;
+    b ^= s.charCodeAt(n - 1 - i); b = Math.imul(b, 0x01000193) >>> 0;
+  }
+  return ("0000000" + a.toString(16)).slice(-8) + ("0000000" + b.toString(16)).slice(-4);
+}
+function matchCanon(word) {
+  var w = word.replace(/sch|ch/g, "sh").replace(/ph/g, "f").replace(/ck/g, "k").replace(/[cq]/g, "k")
+    .replace(/z/g, "s").replace(/y/g, "i").replace(/w/g, "v").replace(/x/g, "ks")
+    .replace(/[صثطذظضقگچڤپء]/g, function (c) { return MATCH_AR[c]; });
+  return w.replace(/(.)\1+/g, "$1");
 }
 function matchWords(text) {
-  var plain = normalizeAr(String(text).normalize("NFD").replace(/[̀-ͯ]/g, ""));
-  return plain.split(/[^0-9a-zء-ي]+/).filter(Boolean);
+  var plain = normalizeAr(String(text).normalize("NFD").replace(/[̀-ͯ]/g, ""))
+    .replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); });
+  return plain.split(/[^0-9a-zء-يپچڤگ]+/).filter(Boolean).map(matchCanon);
 }
+// Every spelling one letter away from w (substituted, inserted, deleted, swapped).
+function matchEdits(w) {
+  var A = /[a-z]/.test(w) ? MATCH_LETTERS.la : MATCH_LETTERS.ar, out = [], i, j;
+  for (i = 0; i <= w.length; i++) {
+    for (j = 0; j < A.length; j++) {
+      out.push(w.slice(0, i) + A[j] + w.slice(i));
+      if (i < w.length) out.push(w.slice(0, i) + A[j] + w.slice(i + 1));
+    }
+    if (i < w.length && w.length >= 6) out.push(w.slice(0, i) + w.slice(i + 1));
+    if (i < w.length - 1) out.push(w.slice(0, i) + w[i + 1] + w[i] + w.slice(i + 2));
+  }
+  return out;
+}
+// -> { items: [product, ...], brand: bool } or null. A perfume name beats a brand
+// name, an exact match beats a near one, and a longer name beats a shorter one.
 function matchPerfume(text) {
-  var words = matchWords(text);
-  var runs = [];
-  for (var i = 0; i < words.length; i++) {
-    for (var j = i + 1; j <= Math.min(words.length, i + 3); j++) runs.push(words.slice(i, j).join(""));
+  var words = matchWords(text), runs = [], seen = {}, i, j;
+  for (i = 0; i < words.length; i++) {
+    for (j = i + 1; j <= Math.min(words.length, i + 3); j++) {
+      var r = words.slice(i, j).join("");
+      if (!seen[r]) { seen[r] = j - i; runs.push(r); }
+    }
   }
-  runs.sort(function (a, b) { return b.length - a.length; });
-  for (var k = 0; k < runs.length; k++) {
-    var id = SCENT_MATCH[matchHash(runs[k])];
-    if (id && productById(id)) return productById(id);
+  var best = null, bestScore = -1;
+  var consider = function (value, run, exact) {
+    var brand = value.charAt(0) === "*";
+    var score = (brand ? 0 : 2000) + (exact ? 1000 : 0) + run.length;
+    if (score > bestScore) { bestScore = score; best = value; }
+  };
+  runs.forEach(function (r) { var v = SCENT_MATCH[matchHash(r)]; if (v) consider(v, r, true); });
+  // Near matches only for short entries (a name, or "زي + name"), to stay fast while typing.
+  if (bestScore < 2000 && words.length <= 6) {
+    runs.forEach(function (r) {
+      if (r.length < 5 || r.length > 16 || seen[r] > 2) return;
+      var edits = matchEdits(r);
+      for (var k = 0; k < edits.length; k++) { var v = SCENT_MATCH[matchHash(edits[k])]; if (v) { consider(v, r, false); break; } }
+    });
   }
-  return null;
+  if (!best) return null;
+  var items = best.replace(/^\*/, "").split(" ").map(productById).filter(Boolean);
+  return items.length ? { items: items, brand: best.charAt(0) === "*" } : null;
 }
 
 function productById(id) {
