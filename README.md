@@ -20,18 +20,20 @@ Then open http://localhost:8080. This needs Node 22 or newer and installs nothin
 
 ## Edit → build → check
 
-The deployed `main.js` and `main.css` are **generated**. Edit the files in `src/`, then run:
+The deployed `main.js`, `main.css` and the first-paint part of `index.html` are
+**generated**. Edit the files in `src/`, then run:
 
 ```
-node scripts/build.mjs     # writes main.js + main.css
-node scripts/check.mjs     # catalog, prices, WhatsApp message format, router
+node scripts/build.mjs     # writes main.js, main.css and the shell inside index.html
+node scripts/check.mjs     # build is fresh, catalog, prices, WhatsApp message format, router
 ```
 
 | What you want to change | File |
 |---|---|
 | Products, prices, sizes, WhatsApp number, homepage picks | `src/catalog.js` |
 | Scent families, notes and "character" (add them only from the real product sheet) | `src/catalog.js` (optional fields are documented at the top) |
-| Colors, fonts, spacing, radii | `src/styles/tokens.css` (display font: Reem Kufi, SIL OFL, in `fonts/`) |
+| Colors, fonts, spacing, radii | `src/styles/tokens.css` (display font: Reem Kufi, SIL OFL, in `fonts/`; the `.woff` is made from the `.ttf` with `node scripts/ttf-to-woff.mjs fonts/ReemKufi-wght.ttf fonts/ReemKufi-wght.woff`) |
+| What shows before `main.js` loads (first paint) | `src/shell.js` (see below) |
 | Header, menu, footer, drawers, sticky basket bar, breakpoints | `src/styles/layout.css` |
 | Buttons, filter chips, cards, size picker, basket lines, divider | `src/styles/components.css` |
 | Hero, story, collection, product page layouts | `src/styles/pages.css` |
@@ -49,9 +51,15 @@ Breakpoints are mobile-first:
 - 1024 px: desktop nav, 4-column grid, and the sticky basket bar is replaced by the header basket
 - 1280 px: 5-column grid, so each 5-product section fits on one row
 
-`index.html` also contains a small static copy of the header and hero. It paints
-the homepage before `main.js` finishes loading. If you change the hero text in
-`src/pages.js`, update it there too.
+### First paint
+
+`main.js` is large, so `index.html` carries a light copy of the top of each page
+that shows while it downloads. The build renders the header and homepage hero
+from the app's own components, so you never edit them twice. On a product link,
+`src/shell.js` draws the photo, name and price, and starts the photo download
+early. On a collection link it draws the title. React replaces it all with
+identical layout, so nothing jumps. Don't edit between the `<!-- build:... -->`
+markers in `index.html`; the build rewrites them.
 
 ### Why there is no npm/bundler
 
@@ -59,8 +67,11 @@ There is no npm or bundler because the original site was delivered as a prebuilt
 bundle, without its source. `vendor/kit-runtime.head.js` is that bundle's
 React 18 runtime, kept byte-for-byte. The build wraps the readable app code in
 `src/` between `head` and `tail`. Moving to a standard React + Vite setup would
-shrink the 865 KB `main.js` a lot. That is the main remaining performance
-opportunity.
+shrink the 870 KB `main.js` a lot. That is the main remaining performance
+opportunity: collection pages still wait for it before showing products.
+
+Make sure your host compresses `.js`, `.css` and `.html` (gzip or Brotli). Most
+static hosts do this by default; `main.js` goes from 870 KB to about 230 KB.
 
 ## URLs
 

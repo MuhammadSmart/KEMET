@@ -18,7 +18,9 @@ function pageTitle(route) {
 
 function useBasket() {
   var _b = useState(loadBasket), basket = _b[0], setBasket = _b[1];
-  var _n = useState(""), notice = _n[0], setNotice = _n[1];
+  var _n = useState({ text: "", n: 0 }), notice = _n[0], setNoticeState = _n[1];
+  // Counter so the same message (adding the same item twice) is announced again.
+  var setNotice = useCallback(function (text) { setNoticeState(function (o) { return { text: text, n: o.n + 1 }; }); }, []);
   useEffect(function () { saveBasket(basket); }, [basket]);
   // Keep several open tabs in sync.
   useEffect(function () {
@@ -115,7 +117,7 @@ function App() {
     h(MobileBasketBar, null),
     h(MobileMenu, { open: menuOpen, onClose: closeMenu }),
     h(BasketDrawer, { open: basketOpen, onClose: closeBasket }),
-    h("div", { className: "sr-only", role: "status", "aria-live": "polite" }, b.notice));
+    h("div", { className: "sr-only", role: "status", "aria-live": "polite" }, b.notice.text && h("span", { key: b.notice.n }, b.notice.text)));
 }
 
 function scrollToSection(id, smooth) {

@@ -1,5 +1,6 @@
 // Zero-dependency checks: node scripts/check.mjs
-// - built main.js parses and contains the app; main.css was generated
+// - main.js, main.css and index.html's first-paint shell match a fresh build of src/
+// - the shell's route parsing and breadcrumbs match the app's
 // - catalog integrity (unique IDs, sections, prices, photo files exist)
 // - IDs, names, sections and prices match the original site (from git history)
 // - WhatsApp basket message keeps the original format
@@ -10,13 +11,20 @@ import vm from "node:vm";
 import path from "node:path";
 import assert from "node:assert/strict";
 import { fileURLToPath } from "node:url";
+import { buildAll } from "./build.mjs";
+import { buildShell } from "./shell.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (p) => readFile(path.join(root, p), "utf8");
 let passed = 0;
+let skipped = 0;
 const failures = [];
+const SKIP = Symbol("skip");
 async function test(name, fn) {
-  try { await fn(); passed++; console.log(`  ok  ${name}`); }
+  try {
+    if ((await fn()) === SKIP) { skipped++; console.log(`  --  ${name} (skipped)`); return; }
+    passed++; console.log(`  ok  ${name}`);
+  }
   catch (e) { failures.push(name); console.log(`  FAIL ${name}\n       ${e.message.split("\n").join("\n       ")}`); }
 }
 
@@ -35,19 +43,36 @@ const K = sandbox.__k;
 
 console.log("KEMET checks");
 
-await test("main.js parses and contains the generated app", async () => {
+await test("main.js, main.css and index.html match a fresh build of src/", async () => {
   execFileSync(process.execPath, ["--check", path.join(root, "main.js")]);
-  const js = await read("main.js");
-  assert.ok(js.includes("(function kemetApp()"), "app block missing — run node scripts/build.mjs");
-  const src = await read("src/app.js");
-  assert.ok(js.includes(src.split("\n")[1].trim()), "main.js is stale — run node scripts/build.mjs");
+  const built = await buildAll();
+  const lf = (t) => t.replace(/\r\n/g, "\n");
+  for (const [file, want] of [["main.js", built.js], ["main.css", built.css], ["index.html", built.html]]) {
+    assert.ok(lf(await read(file)) === lf(want), `${file} is stale — run node scripts/build.mjs`);
+  }
 });
 
-await test("main.css is generated from src/styles", async () => {
-  const css = await read("main.css");
-  assert.ok(css.startsWith("/* KEMET — generated"), "main.css not generated");
-  const tokens = await read("src/styles/tokens.css");
-  assert.ok(css.includes(tokens.trim().split("\n").slice(-3)[0].trim()), "main.css is stale — run node scripts/build.mjs");
+// The first-paint shell (src/shell.js) runs before main.js, so it has its own
+// small router and breadcrumb markup. Check both agree with the app.
+const shellBuild = await buildShell(root);
+const shellBox = {
+  location: { hash: "#/" },
+  document: { head: { appendChild() {} }, createElement: () => ({ setAttribute() {} }) },
+  decodeURIComponent,
+};
+shellBox.window = shellBox;
+vm.createContext(shellBox);
+vm.runInContext((await read("src/shell.js")).replace("__SHELL_HEAD__", JSON.stringify(shellBuild.head)).replace("__SHELL_DATA__", JSON.stringify(shellBuild.data)), shellBox);
+const S = shellBox.__kemetShell;
+
+await test("first-paint shell routes and breadcrumbs match the app", () => {
+  assert.equal(S.crumbs([{ to: "#/", label: "الرئيسية" }, { label: "X" }]), shellBuild.crumbSample);
+  const kind = (r) => (r.name === "product" && !K.products.some((p) => p.id === r.id) ? "notfound" : r.name);
+  for (const hash of ["", "#/", "#/?s=story", "#/collection", "#/collection/men", "#/collection/nope", "#/collection?q=x",
+    "#/p/w-hams", "#/p/w-hams?size=s30", "#/p/nope", "#sec-lotion", "#sec-nope", "#/whatever"]) {
+    const shell = S.parse(hash).name;
+    assert.equal(shell === "other" ? "notfound" : shell, kind(K.parseRoute(hash)), `shell and app disagree on "${hash}"`);
+  }
 });
 
 await test("product IDs are unique and sections exist", () => {
@@ -67,8 +92,7 @@ await test("catalog matches the original site (IDs, names, sections, sizes, pric
   try {
     legacy = execFileSync("git", ["show", "413e16e:main.js"], { cwd: root, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   } catch {
-    console.log("       (skipped: original commit 413e16e not available)");
-    return;
+    return SKIP; // original commit 413e16e not available (e.g. a copy without git history)
   }
   const start = legacy.indexOf("var SIZE_PRICES");
   const end = legacy.indexOf("function toAr");
@@ -122,5 +146,5 @@ await test("prices: default size, ranges, per-ml labels", () => {
   assert.equal(K.perMlLabel("s50"), "٧ - ٨ جنيه للملّي");
 });
 
-console.log(`\n${passed} passed, ${failures.length} failed`);
+console.log(`\n${passed} passed, ${failures.length} failed${skipped ? `, ${skipped} skipped` : ""}`);
 if (failures.length) process.exit(1);

@@ -121,10 +121,21 @@ function MobileMenu(props) {
 
 function QtyStepper(props) {
   var q = props.value;
+  var min = props.min || 0;
+  var atMin = q <= min, atMax = q >= 99;
+  var of = props.itemName ? " " + props.itemName : "";
+  // aria-disabled instead of disabled: a disabled button drops keyboard focus
+  // the moment the limit is reached.
   return h("div", { className: "qty", role: "group", "aria-label": props.label },
-    h("button", { type: "button", onClick: function () { props.onChange(q - 1); }, disabled: q <= (props.min || 0), "aria-label": "قلّل الكمية" }, h(Icon, { name: "minus", size: 18 })),
+    h("button", {
+      type: "button", "aria-disabled": atMin ? "true" : undefined, "aria-label": of ? "قلّل كمية" + of : "قلّل الكمية",
+      onClick: function () { if (!atMin) props.onChange(q - 1); }
+    }, h(Icon, { name: "minus", size: 18 })),
     h("output", { "aria-live": "polite", "aria-label": "الكمية " + toAr(q) }, toAr(q)),
-    h("button", { type: "button", onClick: function () { props.onChange(q + 1); }, disabled: q >= 99, "aria-label": "زوّد الكمية" }, h(Icon, { name: "plus", size: 18 })));
+    h("button", {
+      type: "button", "aria-disabled": atMax ? "true" : undefined, "aria-label": of ? "زوّد كمية" + of : "زوّد الكمية",
+      onClick: function () { if (!atMax) props.onChange(q + 1); }
+    }, h(Icon, { name: "plus", size: 18 })));
 }
 
 function BasketDrawer(props) {
@@ -135,9 +146,34 @@ function BasketDrawer(props) {
   var orderable = entries.filter(function (e) { return e.available; });
   var totals = basketTotals(orderable);
   var hasRange = totals.lo !== totals.hi;
+  // Status messages must live inside the open modal: everything outside it is
+  // inert, so the app-wide live region can't be heard while the drawer is open.
+  var _n = useState({ text: "", n: 0 }), notice = _n[0], setNotice = _n[1];
+  var say = function (text) { setNotice(function (o) { return { text: text, n: o.n + 1 }; }); };
+  // After a line disappears, move focus to the next line (or the title) instead
+  // of letting it fall back to the page.
+  var focusLine = useRef(null);
+  useEffect(function () {
+    if (focusLine.current === null || !ref.current) return;
+    var i = focusLine.current;
+    focusLine.current = null;
+    var names = ref.current.querySelectorAll(".basket-line-name");
+    var target = names[Math.min(i, names.length - 1)] || ref.current.querySelector("#basket-title");
+    if (target) target.focus();
+  }, [entries]);
+  var removeLine = function (e, i) {
+    focusLine.current = i;
+    shop.setQty(e.key, 0);
+    say("اتشال " + e.unit + " من السلة.");
+  };
+  var clearAll = function () {
+    focusLine.current = 0;
+    shop.clearBasket();
+    say("السلة اتفضّت.");
+  };
   return h("dialog", { ref: ref, className: "drawer drawer-end", "aria-labelledby": "basket-title" },
     h("div", { className: "drawer-head" },
-      h("h2", { id: "basket-title", className: "drawer-title" }, "سلتك", totals.qty > 0 && h("span", { className: "drawer-sub" }, " (" + toAr(totals.qty) + ")")),
+      h("h2", { id: "basket-title", className: "drawer-title", tabIndex: -1 }, "سلتك", totals.qty > 0 && h("span", { className: "drawer-sub" }, " (" + toAr(totals.qty) + ")")),
       h("button", { type: "button", className: "icon-btn", onClick: close, "aria-label": "اقفل السلة" }, h(Icon, { name: "close" }))),
     entries.length === 0
       ? h("div", { className: "drawer-body basket-empty" },
@@ -145,7 +181,7 @@ function BasketDrawer(props) {
         h("p", null, "السلة فاضية لسه."),
         h(Link, { to: "#/collection", className: "btn btn-primary", onClick: close }, "اكتشف العطور"))
       : h(Fragment, null,
-        h("ul", { className: "drawer-body basket-lines" }, entries.map(function (e) {
+        h("ul", { className: "drawer-body basket-lines" }, entries.map(function (e, i) {
           var p = e.product;
           return h("li", { key: e.key, className: "basket-line" + (e.available ? "" : " is-unavailable") },
             h("div", { className: "basket-thumb" }, h(ProductImage, { product: p, size: "thumb", alt: "" })),
@@ -154,8 +190,8 @@ function BasketDrawer(props) {
               h("p", { className: "basket-line-meta" }, p.sized ? sizeInfo(e.size).label + " · " : "", priceLabel(e.size), " للقطعة"),
               !e.available && h("p", { className: "basket-line-warn", role: "note" }, "غير متاح حاليًا، مش هيتبعت في الطلب."),
               h("div", { className: "basket-line-row" },
-                h(QtyStepper, { value: e.q, min: 1, label: "كمية " + e.unit, onChange: function (n) { shop.setQty(e.key, n); } }),
-                h("button", { type: "button", className: "link-btn", onClick: function () { shop.setQty(e.key, 0); }, "aria-label": "شيل " + e.unit + " من السلة" }, "شيل"))),
+                h(QtyStepper, { value: e.q, min: 1, label: "كمية " + e.unit, itemName: e.unit, onChange: function (n) { shop.setQty(e.key, n); } }),
+                h("button", { type: "button", className: "link-btn", onClick: function () { removeLine(e, i); }, "aria-label": "شيل " + e.unit + " من السلة" }, "شيل"))),
             h("p", { className: "basket-line-total" }, money(e.lo, e.hi)));
         })),
         h("div", { className: "drawer-foot basket-foot" },
@@ -167,7 +203,9 @@ function BasketDrawer(props) {
           h("p", { className: "fine" }, "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع. المحل بيرد عليك بالتفاصيل."),
           h("div", { className: "basket-actions" },
             h("button", { type: "button", className: "link-btn", onClick: close }, "كمّل تسوّق"),
-            h("button", { type: "button", className: "link-btn", onClick: shop.clearBasket }, "فضّي السلة")))));
+            h("button", { type: "button", className: "link-btn", onClick: clearAll }, "فضّي السلة")))),
+    // A new node per message, so repeating the same text is announced again.
+    h("div", { className: "sr-only", role: "status", "aria-live": "polite" }, notice.text && h("span", { key: notice.n }, notice.text)));
 }
 
 // Responsive product photo; falls back to the brand drawing if the image fails.

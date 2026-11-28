@@ -6,7 +6,8 @@
    used for display text only. Body, prices and controls stay on the system Arabic font. */
 @font-face {
   font-family: "Reem Kufi";
-  src: url("fonts/ReemKufi-wght.ttf") format("truetype");
+  /* WOFF = the same TTF with compressed tables (scripts/ttf-to-woff.mjs), half the size. */
+  src: url("fonts/ReemKufi-wght.woff") format("woff"), url("fonts/ReemKufi-wght.ttf") format("truetype");
   font-weight: 400 700;
   font-display: swap;
 }
