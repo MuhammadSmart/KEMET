@@ -10,7 +10,10 @@ html:has(.basket-bar) { --bar-h: 72px; }
 html:has(dialog[open]) { overflow: hidden; }
 body {
   margin: 0;
-  background: var(--alabaster);
+  /* Hieroglyph columns cut faintly into the stone (assets/img/relief.svg, made by
+     scripts/relief.mjs). Cards and panels keep their own plain surface. */
+  background: var(--alabaster) url("assets/img/relief.svg") repeat;
+  background-size: 308px 400px;
   color: var(--ink);
   font-family: var(--font-ar);
   font-size: var(--step-0);
