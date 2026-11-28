@@ -22,7 +22,8 @@ const SOURCE_ORDER = ["runtime.js", "catalog.js", "lib.js", "art.js", "component
 const STYLE_ORDER = ["tokens.css", "base.css", "layout.css", "components.css", "pages.css"];
 const fixtures = process.argv.includes("--fixtures");
 
-const read = (p) => readFile(path.join(root, p), "utf8");
+// Normalize line endings: Git on Windows may check files out with CRLF.
+const read = async (p) => (await readFile(path.join(root, p), "utf8")).replace(/\r\n/g, "\n");
 
 export async function buildJs(extra = []) {
   const head = await read("vendor/kit-runtime.head.js");

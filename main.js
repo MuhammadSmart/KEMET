@@ -14399,238 +14399,238 @@ Error generating stack: ` + i.message + `
     // Products shown on the homepage, in order.
     var FEATURED_IDS = ["w-hams", "w-nefertari", "kemet-edp", "m-malaki"];
     
-    // ===== src/lib.js =====    
-    // Pure helpers: numbers, prices, catalog lookups, WhatsApp messages, basket, routing.    
-        
-    function toAr(n) {    
-      return String(n).replace(/\d/g, function (d) { return "٠١٢٣٤٥٦٧٨٩"[+d]; });    
-    }    
-        
-    var normalizeAr = function (s) {    
-      return s.replace(/[ً-ْٰـ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي")    
-        .replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/ة/g, "ه").toLowerCase().trim();    
-    };    
-        
-    function money(lo, hi) {    
-      return lo === hi ? toAr(lo) + " جنيه" : toAr(lo) + " - " + toAr(hi) + " جنيه";    
-    }    
-        
-    function waLink(text) {    
-      return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);    
-    }    
-        
-    function productById(id) {    
-      return products.find(function (p) { return p.id === id; }) || null;    
-    }    
-    function sectionById(id) {    
-      return SECTIONS.find(function (s) { return s.id === id; }) || null;    
-    }    
-    function sectionTitle(id) {    
-      var s = sectionById(id);    
-      return s ? s.title : "";    
-    }    
-    function familyById(id) {    
-      return SCENT_FAMILIES.find(function (f) { return f.id === id; }) || null;    
-    }    
-    function productsIn(sectionId) {    
-      return products.filter(function (p) { return p.section === sectionId; });    
-    }    
-        
-    // Size keys a product can be bought in ("std" for unsized items).    
-    function sizeKeys(p) {    
-      return p.sized ? PERFUME_SIZES.map(function (s) { return s.key; }) : ["std"];    
-    }    
-    function sizeInfo(key) {    
-      return PERFUME_SIZES.find(function (s) { return s.key === key; }) || null;    
-    }    
-    function isSizeAvailable(p, key) {    
-      if (p.available === false) return false;    
-      return !(p.unavailable || []).includes(key);    
-    }    
-    function defaultSize(p) {    
-      if (!p.sized) return "std";    
-      if (isSizeAvailable(p, DEFAULT_SIZE)) return DEFAULT_SIZE;    
-      return sizeKeys(p).find(function (k) { return isSizeAvailable(p, k); }) || DEFAULT_SIZE;    
-    }    
-    function priceRange(key, qty) {    
-      var pr = SIZE_PRICES[key];    
-      var q = qty == null ? 1 : qty;    
-      return { lo: pr.value * q, hi: (pr.max != null ? pr.max : pr.value) * q };    
-    }    
-    function priceLabel(key) {    
-      var r = priceRange(key, 1);    
-      return money(r.lo, r.hi);    
-    }    
-    // Lowest price across a product's sizes, for "from" labels on cards.    
-    function fromPrice(p) {    
-      var lows = sizeKeys(p).map(function (k) { return SIZE_PRICES[k].value; });    
-      return Math.min.apply(null, lows);    
-    }    
-    // Price per ml, e.g. "≈ ٥ جنيه للملّي" (rounded to whole pounds where possible).    
-    function perMlLabel(key) {    
-      var info = sizeInfo(key);    
-      if (!info) return "";    
-      var r = priceRange(key, 1);    
-      var lo = r.lo / info.ml;    
-      var hi = r.hi / info.ml;    
-      var fmt = function (x) { return toAr(Math.round(x * 10) / 10).replace(".", "٫"); };    
-      return lo === hi ? fmt(lo) + " جنيه للملّي" : fmt(lo) + " - " + fmt(hi) + " جنيه للملّي";    
-    }    
-    function unitName(p, key) {    
-      if (!p.sized) return p.name;    
-      return p.name + " " + sizeInfo(key).label;    
-    }    
-    function hasNotes(p) {    
-      var n = p.notes;    
-      return !!(n && ((n.top && n.top.length) || (n.heart && n.heart.length) || (n.base && n.base.length)));    
-    }    
-        
-    // ---- WhatsApp messages (basket format is unchanged from the original site) ----    
-    function orderMessage(entries) {    
-      var totals = basketTotals(entries);    
-      return [    
-        "أهلاً، عايز أطلب من كيميت:"    
-      ].concat(entries.map(function (e) {    
-        return "• " + e.unit + " × " + toAr(e.q) + " = " + money(e.lo, e.hi);    
-      })).concat([    
-        "الإجمالي: " + money(totals.lo, totals.hi)    
-      ]).join("\n");    
-    }    
-    function scentQuestion(p) {    
-      return "أهلاً، عايز أعرف ريحة " + p.name + " عاملة إزاي، والنوتات بتاعته إيه؟";    
-    }    
-    function availabilityQuestion(p, key) {    
-      return "أهلاً، " + unitName(p, key) + " هيتوفر إمتى؟";    
-    }    
-    var SETS_MESSAGE = "أهلاً، عايز أسأل عن أطقم كيميت وعروضها";    
-    var GENERAL_MESSAGE = "أهلاً، عندي استفسار عن منتجات كيميت";    
-        
-    // ---- Basket: { "<productId>:<sizeKey>": qty } — same keys as the original ----    
-    var BASKET_STORAGE_KEY = "kemet-basket-v1";    
-        
-    function sanitizeBasket(raw) {    
-      var out = {};    
-      if (!raw || typeof raw !== "object") return out;    
-      Object.keys(raw).forEach(function (key) {    
-        var parts = key.split(":");    
-        var p = productById(parts[0]);    
-        var q = Math.floor(Number(raw[key]));    
-        if (p && sizeKeys(p).includes(parts[1]) && q > 0) out[key] = Math.min(99, q);    
-      });    
-      return out;    
-    }    
-    function loadBasket() {    
-      try {    
-        return sanitizeBasket(JSON.parse(window.localStorage.getItem(BASKET_STORAGE_KEY) || "{}"));    
-      } catch (e) {    
-        return {};    
-      }    
-    }    
-    function saveBasket(basket) {    
-      try {    
-        window.localStorage.setItem(BASKET_STORAGE_KEY, JSON.stringify(basket));    
-      } catch (e) {    
-        // Private mode / storage full: the basket still works for this visit.    
-      }    
-    }    
-    function basketEntries(basket) {    
-      var entries = [];    
-      products.forEach(function (p) {    
-        sizeKeys(p).forEach(function (key) {    
-          var q = basket[p.id + ":" + key] || 0;    
-          if (q > 0) {    
-            var r = priceRange(key, q);    
-            entries.push({    
-              key: p.id + ":" + key, product: p, size: key, q: q,    
-              unit: unitName(p, key), lo: r.lo, hi: r.hi,    
-              available: isSizeAvailable(p, key)    
-            });    
-          }    
-        });    
-      });    
-      return entries;    
-    }    
-    function basketTotals(entries) {    
-      return entries.reduce(function (s, e) {    
-        return { qty: s.qty + e.q, lo: s.lo + e.lo, hi: s.hi + e.hi };    
-      }, { qty: 0, lo: 0, hi: 0 });    
-    }    
-        
-    // ---- Hash routing (works on any static host and when opening index.html directly) ----    
-    //   #/                     home         (#/?s=story or #/?s=order scrolls to a home section)    
-    //   #/collection[/<sec>]   collection   (?q=search&family=floral)    
-    //   #/p/<productId>        product      (?size=s30|s50|s100)    
-    function parseRoute(hash) {    
-      var raw = (hash || "").replace(/^#/, "");    
-      var legacy = raw.match(/^sec-([a-z]+)$/); // anchors from the old one-page site    
-      if (legacy) return { name: "collection", section: sectionById(legacy[1]) ? legacy[1] : null, q: "", family: null };    
-      if (raw === "" || raw === "/" || raw.indexOf("/?") === 0) {    
-        var hp = new URLSearchParams(raw.split("?")[1] || "");    
-        return { name: "home", scrollTo: hp.get("s") };    
-      }    
-      var split = raw.split("?");    
-      var parts = split[0].split("/").filter(Boolean).map(function (x) {    
-        try { return decodeURIComponent(x); } catch (e) { return x; }    
-      });    
-      var params = new URLSearchParams(split[1] || "");    
-      if (parts[0] === "collection") {    
-        var sec = parts[1] && sectionById(parts[1]) ? parts[1] : null;    
-        if (parts[1] && !sec) return { name: "notfound" };    
-        var fam = params.get("family");    
-        return { name: "collection", section: sec, q: params.get("q") || "", family: familyById(fam || "") ? fam : null };    
-      }    
-      if (parts[0] === "p" && parts[1]) {    
-        return { name: "product", id: parts[1], size: params.get("size") };    
-      }    
-      return { name: "notfound" };    
-    }    
-    function collectionHash(section, q, family) {    
-      var params = new URLSearchParams();    
-      if (q) params.set("q", q);    
-      if (family) params.set("family", family);    
-      var qs = params.toString();    
-      return "#/collection" + (section ? "/" + section : "") + (qs ? "?" + qs : "");    
-    }    
-    function productHash(id) {    
-      return "#/p/" + encodeURIComponent(id);    
-    }    
-        
-    var ROUTE_EVENT = "kemet:route";    
-    var navState = { push: false };    
-        
-    function subscribeRoute(cb) {    
-      window.addEventListener("hashchange", cb);    
-      window.addEventListener(ROUTE_EVENT, cb);    
-      return function () {    
-        window.removeEventListener("hashchange", cb);    
-        window.removeEventListener(ROUTE_EVENT, cb);    
-      };    
-    }    
-    function getHash() {    
-      return window.location.hash;    
-    }    
-    function useRoute() {    
-      var hash = useSyncExternalStore(subscribeRoute, getHash, getHash);    
-      return useMemo(function () { return Object.assign(parseRoute(hash), { hash: hash }); }, [hash]);    
-    }    
-    // Mark the next route change as a forward navigation (scroll to top + move focus).    
-    function markPush() {    
-      navState.push = true;    
-      navState.y = window.scrollY; // remembered for the Back button    
-    }    
-    function navigate(hash, opts) {    
-      if (opts && opts.replace) {    
-        window.history.replaceState(window.history.state, "", hash);    
-        window.dispatchEvent(new Event(ROUTE_EVENT));    
-      } else {    
-        markPush();    
-        window.location.hash = hash;    
-      }    
-    }    
-    // Scroll position per page (path without query), used when going back.    
-    function routeKey(hash) {    
-      return (hash || "#/").split("?")[0] || "#/";    
-    }    
+    // ===== src/lib.js =====
+    // Pure helpers: numbers, prices, catalog lookups, WhatsApp messages, basket, routing.
+    
+    function toAr(n) {
+      return String(n).replace(/\d/g, function (d) { return "٠١٢٣٤٥٦٧٨٩"[+d]; });
+    }
+    
+    var normalizeAr = function (s) {
+      return s.replace(/[ً-ْٰـ]/g, "").replace(/[أإآٱ]/g, "ا").replace(/ى/g, "ي")
+        .replace(/ؤ/g, "و").replace(/ئ/g, "ي").replace(/ة/g, "ه").toLowerCase().trim();
+    };
+    
+    function money(lo, hi) {
+      return lo === hi ? toAr(lo) + " جنيه" : toAr(lo) + " - " + toAr(hi) + " جنيه";
+    }
+    
+    function waLink(text) {
+      return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
+    }
+    
+    function productById(id) {
+      return products.find(function (p) { return p.id === id; }) || null;
+    }
+    function sectionById(id) {
+      return SECTIONS.find(function (s) { return s.id === id; }) || null;
+    }
+    function sectionTitle(id) {
+      var s = sectionById(id);
+      return s ? s.title : "";
+    }
+    function familyById(id) {
+      return SCENT_FAMILIES.find(function (f) { return f.id === id; }) || null;
+    }
+    function productsIn(sectionId) {
+      return products.filter(function (p) { return p.section === sectionId; });
+    }
+    
+    // Size keys a product can be bought in ("std" for unsized items).
+    function sizeKeys(p) {
+      return p.sized ? PERFUME_SIZES.map(function (s) { return s.key; }) : ["std"];
+    }
+    function sizeInfo(key) {
+      return PERFUME_SIZES.find(function (s) { return s.key === key; }) || null;
+    }
+    function isSizeAvailable(p, key) {
+      if (p.available === false) return false;
+      return !(p.unavailable || []).includes(key);
+    }
+    function defaultSize(p) {
+      if (!p.sized) return "std";
+      if (isSizeAvailable(p, DEFAULT_SIZE)) return DEFAULT_SIZE;
+      return sizeKeys(p).find(function (k) { return isSizeAvailable(p, k); }) || DEFAULT_SIZE;
+    }
+    function priceRange(key, qty) {
+      var pr = SIZE_PRICES[key];
+      var q = qty == null ? 1 : qty;
+      return { lo: pr.value * q, hi: (pr.max != null ? pr.max : pr.value) * q };
+    }
+    function priceLabel(key) {
+      var r = priceRange(key, 1);
+      return money(r.lo, r.hi);
+    }
+    // Lowest price across a product's sizes, for "from" labels on cards.
+    function fromPrice(p) {
+      var lows = sizeKeys(p).map(function (k) { return SIZE_PRICES[k].value; });
+      return Math.min.apply(null, lows);
+    }
+    // Price per ml, e.g. "≈ ٥ جنيه للملّي" (rounded to whole pounds where possible).
+    function perMlLabel(key) {
+      var info = sizeInfo(key);
+      if (!info) return "";
+      var r = priceRange(key, 1);
+      var lo = r.lo / info.ml;
+      var hi = r.hi / info.ml;
+      var fmt = function (x) { return toAr(Math.round(x * 10) / 10).replace(".", "٫"); };
+      return lo === hi ? fmt(lo) + " جنيه للملّي" : fmt(lo) + " - " + fmt(hi) + " جنيه للملّي";
+    }
+    function unitName(p, key) {
+      if (!p.sized) return p.name;
+      return p.name + " " + sizeInfo(key).label;
+    }
+    function hasNotes(p) {
+      var n = p.notes;
+      return !!(n && ((n.top && n.top.length) || (n.heart && n.heart.length) || (n.base && n.base.length)));
+    }
+    
+    // ---- WhatsApp messages (basket format is unchanged from the original site) ----
+    function orderMessage(entries) {
+      var totals = basketTotals(entries);
+      return [
+        "أهلاً، عايز أطلب من كيميت:"
+      ].concat(entries.map(function (e) {
+        return "• " + e.unit + " × " + toAr(e.q) + " = " + money(e.lo, e.hi);
+      })).concat([
+        "الإجمالي: " + money(totals.lo, totals.hi)
+      ]).join("\n");
+    }
+    function scentQuestion(p) {
+      return "أهلاً، عايز أعرف ريحة " + p.name + " عاملة إزاي، والنوتات بتاعته إيه؟";
+    }
+    function availabilityQuestion(p, key) {
+      return "أهلاً، " + unitName(p, key) + " هيتوفر إمتى؟";
+    }
+    var SETS_MESSAGE = "أهلاً، عايز أسأل عن أطقم كيميت وعروضها";
+    var GENERAL_MESSAGE = "أهلاً، عندي استفسار عن منتجات كيميت";
+    
+    // ---- Basket: { "<productId>:<sizeKey>": qty } — same keys as the original ----
+    var BASKET_STORAGE_KEY = "kemet-basket-v1";
+    
+    function sanitizeBasket(raw) {
+      var out = {};
+      if (!raw || typeof raw !== "object") return out;
+      Object.keys(raw).forEach(function (key) {
+        var parts = key.split(":");
+        var p = productById(parts[0]);
+        var q = Math.floor(Number(raw[key]));
+        if (p && sizeKeys(p).includes(parts[1]) && q > 0) out[key] = Math.min(99, q);
+      });
+      return out;
+    }
+    function loadBasket() {
+      try {
+        return sanitizeBasket(JSON.parse(window.localStorage.getItem(BASKET_STORAGE_KEY) || "{}"));
+      } catch (e) {
+        return {};
+      }
+    }
+    function saveBasket(basket) {
+      try {
+        window.localStorage.setItem(BASKET_STORAGE_KEY, JSON.stringify(basket));
+      } catch (e) {
+        // Private mode / storage full: the basket still works for this visit.
+      }
+    }
+    function basketEntries(basket) {
+      var entries = [];
+      products.forEach(function (p) {
+        sizeKeys(p).forEach(function (key) {
+          var q = basket[p.id + ":" + key] || 0;
+          if (q > 0) {
+            var r = priceRange(key, q);
+            entries.push({
+              key: p.id + ":" + key, product: p, size: key, q: q,
+              unit: unitName(p, key), lo: r.lo, hi: r.hi,
+              available: isSizeAvailable(p, key)
+            });
+          }
+        });
+      });
+      return entries;
+    }
+    function basketTotals(entries) {
+      return entries.reduce(function (s, e) {
+        return { qty: s.qty + e.q, lo: s.lo + e.lo, hi: s.hi + e.hi };
+      }, { qty: 0, lo: 0, hi: 0 });
+    }
+    
+    // ---- Hash routing (works on any static host and when opening index.html directly) ----
+    //   #/                     home         (#/?s=story or #/?s=order scrolls to a home section)
+    //   #/collection[/<sec>]   collection   (?q=search&family=floral)
+    //   #/p/<productId>        product      (?size=s30|s50|s100)
+    function parseRoute(hash) {
+      var raw = (hash || "").replace(/^#/, "");
+      var legacy = raw.match(/^sec-([a-z]+)$/); // anchors from the old one-page site
+      if (legacy) return { name: "collection", section: sectionById(legacy[1]) ? legacy[1] : null, q: "", family: null };
+      if (raw === "" || raw === "/" || raw.indexOf("/?") === 0) {
+        var hp = new URLSearchParams(raw.split("?")[1] || "");
+        return { name: "home", scrollTo: hp.get("s") };
+      }
+      var split = raw.split("?");
+      var parts = split[0].split("/").filter(Boolean).map(function (x) {
+        try { return decodeURIComponent(x); } catch (e) { return x; }
+      });
+      var params = new URLSearchParams(split[1] || "");
+      if (parts[0] === "collection") {
+        var sec = parts[1] && sectionById(parts[1]) ? parts[1] : null;
+        if (parts[1] && !sec) return { name: "notfound" };
+        var fam = params.get("family");
+        return { name: "collection", section: sec, q: params.get("q") || "", family: familyById(fam || "") ? fam : null };
+      }
+      if (parts[0] === "p" && parts[1]) {
+        return { name: "product", id: parts[1], size: params.get("size") };
+      }
+      return { name: "notfound" };
+    }
+    function collectionHash(section, q, family) {
+      var params = new URLSearchParams();
+      if (q) params.set("q", q);
+      if (family) params.set("family", family);
+      var qs = params.toString();
+      return "#/collection" + (section ? "/" + section : "") + (qs ? "?" + qs : "");
+    }
+    function productHash(id) {
+      return "#/p/" + encodeURIComponent(id);
+    }
+    
+    var ROUTE_EVENT = "kemet:route";
+    var navState = { push: false };
+    
+    function subscribeRoute(cb) {
+      window.addEventListener("hashchange", cb);
+      window.addEventListener(ROUTE_EVENT, cb);
+      return function () {
+        window.removeEventListener("hashchange", cb);
+        window.removeEventListener(ROUTE_EVENT, cb);
+      };
+    }
+    function getHash() {
+      return window.location.hash;
+    }
+    function useRoute() {
+      var hash = useSyncExternalStore(subscribeRoute, getHash, getHash);
+      return useMemo(function () { return Object.assign(parseRoute(hash), { hash: hash }); }, [hash]);
+    }
+    // Mark the next route change as a forward navigation (scroll to top + move focus).
+    function markPush() {
+      navState.push = true;
+      navState.y = window.scrollY; // remembered for the Back button
+    }
+    function navigate(hash, opts) {
+      if (opts && opts.replace) {
+        window.history.replaceState(window.history.state, "", hash);
+        window.dispatchEvent(new Event(ROUTE_EVENT));
+      } else {
+        markPush();
+        window.location.hash = hash;
+      }
+    }
+    // Scroll position per page (path without query), used when going back.
+    function routeKey(hash) {
+      return (hash || "#/").split("?")[0] || "#/";
+    }
     
     // ===== src/art.js =====
     // Brand drawings: the winged-ankh emblem (from the original site), product
@@ -15205,313 +15205,313 @@ Error generating stack: ` + i.message + `
       return EB;
     })();
     
-    // ===== src/pages.js =====    
-    // Home, collection, product and not-found pages.    
-        
-    function PageHeading(props) {    
-      // Focus target after navigation (tabIndex -1 keeps it out of the tab order).    
-      return h("h1", { className: props.className, tabIndex: -1, "data-page-heading": "" }, props.children);    
-    }    
-        
-    // ---------------- Home ----------------    
-    function HomePage() {    
-      var featured = FEATURED_IDS.map(productById).filter(Boolean);    
-      var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });    
-      return h("main", { id: "main", className: "home" },    
-        h("section", { className: "hero", "aria-labelledby": "hero-title" },    
-          h("div", { className: "wrap hero-inner" },    
-            h("div", { className: "hero-media" },    
-              h("div", { className: "hero-arch" },    
-                h("picture", null,    
-                  h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),    
-                  h("source", { type: "image/webp", srcSet: HERO_PHOTO.desktop }),    
-                  h("img", {    
-                    src: HERO_PHOTO.jpg, width: 640, height: 800, fetchpriority: "high", decoding: "async",    
-                    alt: "زجاجة عطر كيميت أو دو بارفان بشعار مفتاح الحياة المجنّح، جنب علبتها السودا بالنقوش الذهبي"    
-                  })))),    
-            h("div", { className: "hero-copy" },    
-              h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),    
-              h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),    
-              h("p", { className: "lede" }, "عطور أو دو بارفان حريمي ورجالي من محل كيميت، كل عطر بـ٣ أحجام. اختار ريحتك وحجمك، وابعت طلبك كله في رسالة واتساب واحدة."),    
-              h("div", { className: "btn-row" },    
-                h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),    
-                h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),    
-              h("ul", { className: "hero-facts", role: "list" },    
-                h("li", null, h("b", null, "٣٠ · ٥٠ · ١٠٠"), " مل"),    
-                h("li", null, "من ", h("b", null, "٢٠٠"), " جنيه"),    
-                h("li", null, "الطلب على ", h("b", null, "واتساب")))))),    
-        
-        h(Divider, null),    
-        
-        h("section", { className: "wrap section", "aria-labelledby": "featured-title" },    
-          h("div", { className: "section-head" },    
-            h("div", null,    
-              h("h2", { id: "featured-title" }, "عطور كيميت"),    
-              h("p", { className: "section-sub" }, "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي.")),    
-            h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),    
-          h("div", { className: "entry-tiles" },    
-            ["women", "men"].map(function (id) {    
-              var s = sectionById(id);    
-              var first = productsIn(id)[0];    
-              return h(Link, { key: id, to: collectionHash(id), className: "entry-tile" },    
-                h("span", { className: "entry-tile-media" }, h(ProductImage, { product: first, alt: "" })),    
-                h("span", { className: "entry-tile-text" },    
-                  h("span", { className: "entry-tile-title" }, "عطور " + s.short),    
-                  h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),    
-                h(Icon, { name: "chevron", className: "entry-tile-arrow" }));    
-            })),    
-          h(ProductGrid, { items: featured, columns: 4 })),    
-        
-        h("section", { className: "wrap section", "aria-labelledby": "more-title" },    
-          h("h2", { id: "more-title" }, "كمان في كيميت"),    
-          h("ul", { className: "section-links", role: "list" }, others.map(function (s) {    
-            var n = productsIn(s.id).length;    
-            return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id) },    
-              h("span", null, s.title),    
-              h("span", { className: "section-links-count" }, n > 0 ? toAr(n) + " منتجات" : "اسأل على واتساب"),    
-              h(Icon, { name: "chevron", size: 18 })));    
-          }))),    
-        
-        h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },    
-          h("div", { className: "wrap story-inner" },    
-            h("div", { className: "story-mark" }, h(Lotus, { size: 44 })),    
-            h("div", { className: "story-copy" },    
-              h("p", { className: "eyebrow eyebrow-light" }, "حكايتنا"),    
-              h("h2", { id: "story-title" }, "ليه «كيميت»؟"),    
-              h("p", null, "كيميت، يعني «الأرض السوداء»، هو الاسم اللي المصريين القدماء سمّوا بيه بلدهم، على لون طمي النيل الخصب اللي كان بيغطي الأرض بعد الفيضان."),    
-              h("p", null, "من أكتر من ٣٠٠٠ سنة، في عصر أمنحتب التالت وإخناتون، شكّل صنّاع الزجاج المصريين قوارير عطر زرقا بلون الكوبالت، عليها خيوط زجاج صفرا وبيضا وفيروزي بتبدأ زجزاج حاد وتنتهي موجة هادية. وفي مقبرة توت عنخ آمون اتلقت قارورة عطر من الكالسيت (المرمر المصري) منحوت عليها إله النيل وهو بيربط اللوتس والبردي."),    
-              h("p", null, "من هنا جت ألوان كيميت: المرمر الدافي، والأزرق الكوبالتي، ولمسة دهب. والخط اللي بيبدأ زجزاج ويخلص موجة بين أقسام الموقع مأخوذ من نفس القوارير."),    
-              h("details", { className: "sources" },    
-                h("summary", null, "المصادر"),    
-                h("ul", null,    
-                  h("li", null, h("a", { href: "https://www.metmuseum.org/art/collection/search/544828", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "The Met — Amphora-shaped perfume bottle, 26.7.1177")),    
-                  h("li", null, h("a", { href: "http://www.griffith.ox.ac.uk/gri/carter/210.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Griffith Institute — Carter no. 210, calcite perfume vase")),    
-                  h("li", null, h("a", { href: "https://forces.si.edu/soils/02_08_03.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Smithsonian — Kemet, the black land")))))),    
-          h(Divider, { tone: "light" })),    
-        
-        h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title" },    
-          h("h2", { id: "order-title" }, "إزاي تطلب"),    
-          h("ol", { className: "steps" },    
-            h("li", null, h("b", null, "اختار العطر والحجم"), h("span", null, "من صفحة كل عطر هتشوف سعر كل حجم قبل ما تضيفه.")),    
-            h("li", null, h("b", null, "راجع السلة"), h("span", null, "هتلاقي الإجمالي، وتقدر تغيّر الكمية أو تشيل أي منتج.")),    
-            h("li", null, h("b", null, "ابعت الطلب على واتساب"), h("span", null, "الطلب بيتكتب لوحده في رسالة للمحل، ومفيش دفع على الموقع. المحل بيرد عليك بالتفاصيل."))),    
-          h("div", { className: "contact-card" },    
-            h("div", null,    
-              h("h3", null, "محتار تختار إيه؟"),    
-              h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك.")),    
-            h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));    
-    }    
-        
-    // ---------------- Collection ----------------    
-    function CollectionPage(props) {    
-      var route = props.route;    
-      var section = route.section ? sectionById(route.section) : null;    
-      var q = route.q || "";    
-      var family = route.family;    
-      var nq = normalizeAr(q);    
-      var familiesInUse = SCENT_FAMILIES.filter(function (f) {    
-        return products.some(function (p) { return p.family === f.id; });    
-      });    
-      var showFamilies = familiesInUse.length >= 2;    
-        
-      var setQuery = function (value) { navigate(collectionHash(route.section, value, family), { replace: true }); };    
-      var results = products.filter(function (p) {    
-        if (section && p.section !== section.id) return false;    
-        if (family && p.family !== family) return false;    
-        if (nq && !(normalizeAr(p.name).includes(nq) || normalizeAr(sectionTitle(p.section)).includes(nq) ||    
-          (p.character && normalizeAr(p.character).includes(nq)))) return false;    
-        return true;    
-      });    
-      var filtered = !!(section || family || nq);    
-      var title = section ? section.title : "كل المنتجات";    
-      var crumbs = [{ to: "#/", label: "الرئيسية" }].concat(section ? [{ to: "#/collection", label: "كل المنتجات" }, { label: section.title }] : [{ label: "كل المنتجات" }]);    
-      var searchId = useId();    
-        
-      var chips = h("nav", { className: "chips", "aria-label": "الأقسام" },    
-        h("ul", { role: "list" },    
-          h("li", null, h(Link, { to: collectionHash(null, q, family), className: "chip", "aria-current": !section ? "page" : undefined }, "الكل")),    
-          SECTIONS.map(function (s) {    
-            var active = section && section.id === s.id;    
-            return h("li", { key: s.id }, h(Link, {    
-              to: collectionHash(active ? null : s.id, q, family), className: "chip", "aria-current": active ? "page" : undefined    
-            }, active && h(Icon, { name: "check", size: 16 }), s.title));    
-          })));    
-        
-      var familyChips = showFamilies && h("nav", { className: "chips chips-family", "aria-label": "طابع الريحة" },    
-        h("p", { className: "chips-label" }, "طابع الريحة"),    
-        h("ul", { role: "list" }, familiesInUse.map(function (f) {    
-          var active = family === f.id;    
-          return h("li", { key: f.id }, h(Link, {    
-            to: collectionHash(route.section, q, active ? null : f.id), className: "chip chip-soft", "aria-current": active ? "true" : undefined    
-          }, active && h(Icon, { name: "check", size: 16 }), f.title));    
-        })));    
-        
-      var active = [];    
-      if (section) active.push({ label: section.title, to: collectionHash(null, q, family), remove: "شيل فلتر " + section.title });    
-      if (family) active.push({ label: familyById(family).title, to: collectionHash(route.section, q, null), remove: "شيل فلتر " + familyById(family).title });    
-      if (q) active.push({ label: "«" + q + "»", to: collectionHash(route.section, "", family), remove: "امسح البحث" });    
-        
-      var body;    
-      if (results.length === 0 && (!section || section.id !== "sets")) {    
-        body = h("div", { className: "empty-state" },    
-          h(Lotus, { size: 40, className: "muted-motif" }),    
-          h("h2", null, "مفيش نتايج", q ? " لـ«" + q + "»" : ""),    
-          h("p", null, "جرّب اسم تاني أو شيل الفلاتر. أو اسألنا على واتساب عن اللي بتدوّر عليه."),    
-          h("div", { className: "btn-row" },    
-            h(Link, { to: "#/collection", className: "btn btn-primary" }, "اعرض كل المنتجات"),    
-            h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : "") }, "اسأل على واتساب")));    
-      } else if (!filtered) {    
-        body = SECTIONS.map(function (s) {    
-          var items = productsIn(s.id);    
-          return h("section", { key: s.id, className: "collection-group", "aria-labelledby": "grp-" + s.id },    
-            h("div", { className: "section-head" },    
-              h("div", null,    
-                h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),    
-                s.blurb && h("p", { className: "section-sub" }, s.blurb)),    
-              items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),    
-            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items }));    
-        });    
-      } else {    
-        body = h(Fragment, null,    
-          section && section.blurb && h("p", { className: "section-sub" }, section.blurb),    
-          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2" }));    
-      }    
-        
-      return h("main", { id: "main", className: "collection" },    
-        h("div", { className: "wrap" },    
-          h(Breadcrumbs, { items: crumbs }),    
-          h("div", { className: "page-head" },    
-            h(PageHeading, null, title),    
-            h("p", { className: "result-count", role: "status" }, toAr(results.length) + " منتج")),    
-          h("div", { className: "filters" },    
-            h("div", { className: "search" },    
-              h("label", { htmlFor: searchId, className: "search-label" }, "دوّر بالاسم"),    
-              h("div", { className: "search-field" },    
-                h(Icon, { name: "search", size: 20 }),    
-                h("input", {    
-                  id: searchId, type: "search", value: q, enterKeyHint: "search", autoComplete: "off",    
-                  placeholder: "مثلاً: نفرتاري، مسك، لوشن",    
-                  onChange: function (e) { setQuery(e.target.value); }    
-                }),    
-                q && h("button", { type: "button", className: "icon-btn search-clear", onClick: function () { setQuery(""); }, "aria-label": "امسح البحث" }, h(Icon, { name: "close", size: 18 })))),    
-            chips,    
-            familyChips),    
-          active.length > 0 && h("div", { className: "active-filters" },    
-            h("span", { className: "active-label" }, "بتعرض:"),    
-            h("ul", { role: "list" }, active.map(function (a) {    
-              return h("li", { key: a.label }, h(Link, { to: a.to, className: "active-chip", "aria-label": a.remove }, a.label, h(Icon, { name: "close", size: 14 })));    
-            })),    
-            h(Link, { to: "#/collection", className: "text-link" }, "امسح الكل")),    
-          body));    
-    }    
-        
-    function SetsCard() {    
-      return h("div", { className: "sets-card" },    
-        h("p", null, "جمّع طقمك بنفسك: اختار أي ٢ أو ٣ منتجات من الأقسام، واسألنا على واتساب عن سعر الطقم والعروض المتاحة."),    
-        h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary" }, "اسأل عن الأطقم على واتساب"));    
-    }    
-        
-    // ---------------- Product ----------------    
-    function ProductPage(props) {    
-      var route = props.route;    
-      var p = productById(route.id);    
-      var shop = useShop();    
-      var initial = p && p.sized && route.size && sizeKeys(p).includes(route.size) && isSizeAvailable(p, route.size) ? route.size : (p ? defaultSize(p) : "std");    
-      var _sz = useState(initial), size = _sz[0], setSize = _sz[1];    
-      var _q = useState(1), qty = _q[0], setQty = _q[1];    
-      var _a = useState(false), added = _a[0], setAdded = _a[1];    
-      useEffect(function () { setSize(initial); setQty(1); setAdded(false); }, [route.id]);    
-      useEffect(function () {    
-        if (!added) return;    
-        var t = setTimeout(function () { setAdded(false); }, 2600);    
-        return function () { clearTimeout(t); };    
-      }, [added]);    
-        
-      if (!p) return h(NotFoundPage, { message: "المنتج ده مش موجود أو اتشال من المحل." });    
-        
-      var section = sectionById(p.section);    
-      var fam = p.family ? familyById(p.family) : null;    
-      var canBuy = isSizeAvailable(p, size);    
-      var r = priceRange(size, qty);    
-      var related = productsIn(p.section).filter(function (x) { return x.id !== p.id; }).slice(0, 4);    
-      var chooseSize = function (k) {    
-        setSize(k);    
-        setAdded(false);    
-        navigate(productHash(p.id) + "?size=" + k, { replace: true });    
-      };    
-      var addToBasket = function () {    
-        shop.add(p, size, qty);    
-        setAdded(true);    
-      };    
-      var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })()));    
-        
-      return h("main", { id: "main", className: "pdp" },    
-        h("div", { className: "wrap" },    
-          h(Breadcrumbs, { items: [{ to: "#/", label: "الرئيسية" }, { to: collectionHash(p.section), label: section.title }, { label: p.name }] }),    
-          h("div", { className: "pdp-grid" },    
-            h("div", { className: "pdp-media" }, h("div", { className: "pdp-frame" }, h(ProductImage, { product: p, size: "large", priority: true, alt: photoAlt(p) }))),    
-            h("div", { className: "pdp-info" },    
-              h("p", { className: "card-kicker" }, section.title, fam ? " · " + fam.title : ""),    
-              h(PageHeading, { className: "pdp-title" }, p.name),    
-              p.sized && h("p", { className: "pdp-type" }, "أو دو بارفان"),    
-              p.character && h("p", { className: "pdp-character" }, p.character),    
-              h("p", { className: "pdp-desc" }, p.desc),    
-        
-              h("div", { className: "buy-box" },    
-                h("p", { className: "pdp-price", "aria-live": "polite" },    
-                  h("span", { className: "pdp-price-value" }, canBuy ? priceLabel(size) : "غير متاح حاليًا"),    
-                  p.sized && canBuy && h("span", { className: "pdp-price-size" }, "لحجم " + sizeInfo(size).label)),    
-                p.sized && h(SizePicker, { product: p, value: size, onChange: chooseSize }),    
-                canBuy    
-                  ? h(Fragment, null,    
-                    h("div", { className: "buy-row" },    
-                      h("div", { className: "buy-qty" },    
-                        h("span", { className: "buy-qty-label", "aria-hidden": "true" }, "الكمية"),    
-                        h(QtyStepper, { value: qty, min: 1, label: "الكمية", onChange: setQty })),    
-                      h("button", { type: "button", className: "btn btn-primary btn-large buy-add", onClick: addToBasket },    
-                        added ? h(Fragment, null, h(Icon, { name: "check", size: 20 }), "اتضاف للسلة") : h(Fragment, null, "أضف للسلة", h("span", { className: "buy-add-price" }, money(r.lo, r.hi))))),    
-                    added && h("button", { type: "button", className: "text-link buy-review", onClick: shop.openBasket }, "راجع السلة وابعت الطلب"),    
-                    h(WhatsAppLink, { message: directOrder, className: "btn btn-secondary btn-block" }, "اطلب ده بس على واتساب"))    
-                  : h("div", { className: "unavailable-note", role: "note" },    
-                    h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),    
-                    h(WhatsAppLink, { message: availabilityQuestion(p, size) }, "اسأل عن التوفر"))),    
-        
-              h("ul", { className: "assurance", role: "list" },    
-                h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),    
-                h("li", null, h(Icon, { name: "truck" }), h("span", null, h("b", null, "التوصيل والدفع. "), "بعد ما تبعت الطلب، المحل بيرد عليك بتفاصيل التوصيل والدفع.")),    
-                h("li", null, h(Icon, { name: "swap" }), h("span", null, h("b", null, "الاستبدال والاسترجاع. "), "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."))))),    
-        
-          h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },    
-            h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),    
-            hasNotes(p)    
-              ? h("dl", { className: "notes" },    
-                [["top", "النوتات العليا", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]].map(function (row) {    
-                  var list = (p.notes[row[0]] || []);    
-                  if (!list.length) return null;    
-                  return h("div", { key: row[0], className: "notes-row" },    
-                    h("dt", null, row[1], h("span", null, row[2])),    
-                    h("dd", null, list.join("، ")));    
-                }))    
-              : h("div", { className: "notes-ask" },    
-                h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),    
-                h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),    
-        
-          related.length > 0 && h("section", { className: "section", "aria-labelledby": "related-title" },    
-            h("div", { className: "section-head" },    
-              h("h2", { id: "related-title" }, "من نفس القسم"),    
-              h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),    
-            h(ProductGrid, { items: related, columns: 4 }))));    
-    }    
-        
-    // ---------------- Not found ----------------    
-    function NotFoundPage(props) {    
-      return h("main", { id: "main", className: "wrap page-msg" },    
-        h(PageHeading, null, "الصفحة دي مش موجودة"),    
-        h("p", null, props.message || "يمكن الرابط اتغيّر. تقدر تكمّل من هنا:"),    
-        h("div", { className: "btn-row" },    
-          h(Link, { to: "#/collection", className: "btn btn-primary" }, "كل المنتجات"),    
-          h(Link, { to: "#/", className: "btn btn-secondary" }, "الرئيسية")));    
-    }    
+    // ===== src/pages.js =====
+    // Home, collection, product and not-found pages.
+    
+    function PageHeading(props) {
+      // Focus target after navigation (tabIndex -1 keeps it out of the tab order).
+      return h("h1", { className: props.className, tabIndex: -1, "data-page-heading": "" }, props.children);
+    }
+    
+    // ---------------- Home ----------------
+    function HomePage() {
+      var featured = FEATURED_IDS.map(productById).filter(Boolean);
+      var others = SECTIONS.filter(function (s) { return s.id !== "women" && s.id !== "men"; });
+      return h("main", { id: "main", className: "home" },
+        h("section", { className: "hero", "aria-labelledby": "hero-title" },
+          h("div", { className: "wrap hero-inner" },
+            h("div", { className: "hero-media" },
+              h("div", { className: "hero-arch" },
+                h("picture", null,
+                  h("source", { media: "(max-width: 719px)", type: "image/webp", srcSet: HERO_PHOTO.mobile }),
+                  h("source", { type: "image/webp", srcSet: HERO_PHOTO.desktop }),
+                  h("img", {
+                    src: HERO_PHOTO.jpg, width: 640, height: 800, fetchpriority: "high", decoding: "async",
+                    alt: "زجاجة عطر كيميت أو دو بارفان بشعار مفتاح الحياة المجنّح، جنب علبتها السودا بالنقوش الذهبي"
+                  })))),
+            h("div", { className: "hero-copy" },
+              h("p", { className: "eyebrow" }, h("span", { lang: "en", dir: "ltr" }, "KEMET"), " · عطور كيميت"),
+              h(PageHeading, { className: "hero-title" }, h("span", { id: "hero-title" }, "خلّي حضورك أسطوري.")),
+              h("p", { className: "lede" }, "عطور أو دو بارفان حريمي ورجالي من محل كيميت، كل عطر بـ٣ أحجام. اختار ريحتك وحجمك، وابعت طلبك كله في رسالة واتساب واحدة."),
+              h("div", { className: "btn-row" },
+                h(Link, { to: "#/collection", className: "btn btn-primary btn-large" }, "اكتشف العطور"),
+                h(Link, { to: "#/?s=order", className: "text-link" }, "إزاي الطلب بيتم؟")),
+              h("ul", { className: "hero-facts", role: "list" },
+                h("li", null, h("b", null, "٣٠ · ٥٠ · ١٠٠"), " مل"),
+                h("li", null, "من ", h("b", null, "٢٠٠"), " جنيه"),
+                h("li", null, "الطلب على ", h("b", null, "واتساب")))))),
+    
+        h(Divider, null),
+    
+        h("section", { className: "wrap section", "aria-labelledby": "featured-title" },
+          h("div", { className: "section-head" },
+            h("div", null,
+              h("h2", { id: "featured-title" }, "عطور كيميت"),
+              h("p", { className: "section-sub" }, "١٠ عطور أو دو بارفان: ٥ حريمي و٥ رجالي.")),
+            h(Link, { to: "#/collection", className: "text-link" }, "كل المنتجات")),
+          h("div", { className: "entry-tiles" },
+            ["women", "men"].map(function (id) {
+              var s = sectionById(id);
+              var first = productsIn(id)[0];
+              return h(Link, { key: id, to: collectionHash(id), className: "entry-tile" },
+                h("span", { className: "entry-tile-media" }, h(ProductImage, { product: first, alt: "" })),
+                h("span", { className: "entry-tile-text" },
+                  h("span", { className: "entry-tile-title" }, "عطور " + s.short),
+                  h("span", { className: "entry-tile-sub" }, toAr(productsIn(id).length) + " عطور · من ٢٠٠ جنيه")),
+                h(Icon, { name: "chevron", className: "entry-tile-arrow" }));
+            })),
+          h(ProductGrid, { items: featured, columns: 4 })),
+    
+        h("section", { className: "wrap section", "aria-labelledby": "more-title" },
+          h("h2", { id: "more-title" }, "كمان في كيميت"),
+          h("ul", { className: "section-links", role: "list" }, others.map(function (s) {
+            var n = productsIn(s.id).length;
+            return h("li", { key: s.id }, h(Link, { to: collectionHash(s.id) },
+              h("span", null, s.title),
+              h("span", { className: "section-links-count" }, n > 0 ? toAr(n) + " منتجات" : "اسأل على واتساب"),
+              h(Icon, { name: "chevron", size: 18 })));
+          }))),
+    
+        h("section", { id: "story", className: "story", "aria-labelledby": "story-title" },
+          h("div", { className: "wrap story-inner" },
+            h("div", { className: "story-mark" }, h(Lotus, { size: 44 })),
+            h("div", { className: "story-copy" },
+              h("p", { className: "eyebrow eyebrow-light" }, "حكايتنا"),
+              h("h2", { id: "story-title" }, "ليه «كيميت»؟"),
+              h("p", null, "كيميت، يعني «الأرض السوداء»، هو الاسم اللي المصريين القدماء سمّوا بيه بلدهم، على لون طمي النيل الخصب اللي كان بيغطي الأرض بعد الفيضان."),
+              h("p", null, "من أكتر من ٣٠٠٠ سنة، في عصر أمنحتب التالت وإخناتون، شكّل صنّاع الزجاج المصريين قوارير عطر زرقا بلون الكوبالت، عليها خيوط زجاج صفرا وبيضا وفيروزي بتبدأ زجزاج حاد وتنتهي موجة هادية. وفي مقبرة توت عنخ آمون اتلقت قارورة عطر من الكالسيت (المرمر المصري) منحوت عليها إله النيل وهو بيربط اللوتس والبردي."),
+              h("p", null, "من هنا جت ألوان كيميت: المرمر الدافي، والأزرق الكوبالتي، ولمسة دهب. والخط اللي بيبدأ زجزاج ويخلص موجة بين أقسام الموقع مأخوذ من نفس القوارير."),
+              h("details", { className: "sources" },
+                h("summary", null, "المصادر"),
+                h("ul", null,
+                  h("li", null, h("a", { href: "https://www.metmuseum.org/art/collection/search/544828", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "The Met — Amphora-shaped perfume bottle, 26.7.1177")),
+                  h("li", null, h("a", { href: "http://www.griffith.ox.ac.uk/gri/carter/210.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Griffith Institute — Carter no. 210, calcite perfume vase")),
+                  h("li", null, h("a", { href: "https://forces.si.edu/soils/02_08_03.html", target: "_blank", rel: "noopener noreferrer", lang: "en", dir: "ltr" }, "Smithsonian — Kemet, the black land")))))),
+          h(Divider, { tone: "light" })),
+    
+        h("section", { id: "order", className: "wrap section", "aria-labelledby": "order-title" },
+          h("h2", { id: "order-title" }, "إزاي تطلب"),
+          h("ol", { className: "steps" },
+            h("li", null, h("b", null, "اختار العطر والحجم"), h("span", null, "من صفحة كل عطر هتشوف سعر كل حجم قبل ما تضيفه.")),
+            h("li", null, h("b", null, "راجع السلة"), h("span", null, "هتلاقي الإجمالي، وتقدر تغيّر الكمية أو تشيل أي منتج.")),
+            h("li", null, h("b", null, "ابعت الطلب على واتساب"), h("span", null, "الطلب بيتكتب لوحده في رسالة للمحل، ومفيش دفع على الموقع. المحل بيرد عليك بالتفاصيل."))),
+          h("div", { className: "contact-card" },
+            h("div", null,
+              h("h3", null, "محتار تختار إيه؟"),
+              h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك.")),
+            h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
+    }
+    
+    // ---------------- Collection ----------------
+    function CollectionPage(props) {
+      var route = props.route;
+      var section = route.section ? sectionById(route.section) : null;
+      var q = route.q || "";
+      var family = route.family;
+      var nq = normalizeAr(q);
+      var familiesInUse = SCENT_FAMILIES.filter(function (f) {
+        return products.some(function (p) { return p.family === f.id; });
+      });
+      var showFamilies = familiesInUse.length >= 2;
+    
+      var setQuery = function (value) { navigate(collectionHash(route.section, value, family), { replace: true }); };
+      var results = products.filter(function (p) {
+        if (section && p.section !== section.id) return false;
+        if (family && p.family !== family) return false;
+        if (nq && !(normalizeAr(p.name).includes(nq) || normalizeAr(sectionTitle(p.section)).includes(nq) ||
+          (p.character && normalizeAr(p.character).includes(nq)))) return false;
+        return true;
+      });
+      var filtered = !!(section || family || nq);
+      var title = section ? section.title : "كل المنتجات";
+      var crumbs = [{ to: "#/", label: "الرئيسية" }].concat(section ? [{ to: "#/collection", label: "كل المنتجات" }, { label: section.title }] : [{ label: "كل المنتجات" }]);
+      var searchId = useId();
+    
+      var chips = h("nav", { className: "chips", "aria-label": "الأقسام" },
+        h("ul", { role: "list" },
+          h("li", null, h(Link, { to: collectionHash(null, q, family), className: "chip", "aria-current": !section ? "page" : undefined }, "الكل")),
+          SECTIONS.map(function (s) {
+            var active = section && section.id === s.id;
+            return h("li", { key: s.id }, h(Link, {
+              to: collectionHash(active ? null : s.id, q, family), className: "chip", "aria-current": active ? "page" : undefined
+            }, active && h(Icon, { name: "check", size: 16 }), s.title));
+          })));
+    
+      var familyChips = showFamilies && h("nav", { className: "chips chips-family", "aria-label": "طابع الريحة" },
+        h("p", { className: "chips-label" }, "طابع الريحة"),
+        h("ul", { role: "list" }, familiesInUse.map(function (f) {
+          var active = family === f.id;
+          return h("li", { key: f.id }, h(Link, {
+            to: collectionHash(route.section, q, active ? null : f.id), className: "chip chip-soft", "aria-current": active ? "true" : undefined
+          }, active && h(Icon, { name: "check", size: 16 }), f.title));
+        })));
+    
+      var active = [];
+      if (section) active.push({ label: section.title, to: collectionHash(null, q, family), remove: "شيل فلتر " + section.title });
+      if (family) active.push({ label: familyById(family).title, to: collectionHash(route.section, q, null), remove: "شيل فلتر " + familyById(family).title });
+      if (q) active.push({ label: "«" + q + "»", to: collectionHash(route.section, "", family), remove: "امسح البحث" });
+    
+      var body;
+      if (results.length === 0 && (!section || section.id !== "sets")) {
+        body = h("div", { className: "empty-state" },
+          h(Lotus, { size: 40, className: "muted-motif" }),
+          h("h2", null, "مفيش نتايج", q ? " لـ«" + q + "»" : ""),
+          h("p", null, "جرّب اسم تاني أو شيل الفلاتر. أو اسألنا على واتساب عن اللي بتدوّر عليه."),
+          h("div", { className: "btn-row" },
+            h(Link, { to: "#/collection", className: "btn btn-primary" }, "اعرض كل المنتجات"),
+            h(WhatsAppLink, { message: GENERAL_MESSAGE + (q ? ": بدوّر على " + q : "") }, "اسأل على واتساب")));
+      } else if (!filtered) {
+        body = SECTIONS.map(function (s) {
+          var items = productsIn(s.id);
+          return h("section", { key: s.id, className: "collection-group", "aria-labelledby": "grp-" + s.id },
+            h("div", { className: "section-head" },
+              h("div", null,
+                h("h2", { id: "grp-" + s.id }, s.title, items.length > 0 && h("span", { className: "count" }, " " + toAr(items.length))),
+                s.blurb && h("p", { className: "section-sub" }, s.blurb)),
+              items.length > 0 && h(Link, { to: collectionHash(s.id), className: "text-link" }, "اعرض القسم ده")),
+            s.id === "sets" ? h(SetsCard, null) : h(ProductGrid, { items: items }));
+        });
+      } else {
+        body = h(Fragment, null,
+          section && section.blurb && h("p", { className: "section-sub" }, section.blurb),
+          section && section.id === "sets" && results.length === 0 ? h(SetsCard, null) : h(ProductGrid, { items: results, headingLevel: "h2" }));
+      }
+    
+      return h("main", { id: "main", className: "collection" },
+        h("div", { className: "wrap" },
+          h(Breadcrumbs, { items: crumbs }),
+          h("div", { className: "page-head" },
+            h(PageHeading, null, title),
+            h("p", { className: "result-count", role: "status" }, toAr(results.length) + " منتج")),
+          h("div", { className: "filters" },
+            h("div", { className: "search" },
+              h("label", { htmlFor: searchId, className: "search-label" }, "دوّر بالاسم"),
+              h("div", { className: "search-field" },
+                h(Icon, { name: "search", size: 20 }),
+                h("input", {
+                  id: searchId, type: "search", value: q, enterKeyHint: "search", autoComplete: "off",
+                  placeholder: "مثلاً: نفرتاري، مسك، لوشن",
+                  onChange: function (e) { setQuery(e.target.value); }
+                }),
+                q && h("button", { type: "button", className: "icon-btn search-clear", onClick: function () { setQuery(""); }, "aria-label": "امسح البحث" }, h(Icon, { name: "close", size: 18 })))),
+            chips,
+            familyChips),
+          active.length > 0 && h("div", { className: "active-filters" },
+            h("span", { className: "active-label" }, "بتعرض:"),
+            h("ul", { role: "list" }, active.map(function (a) {
+              return h("li", { key: a.label }, h(Link, { to: a.to, className: "active-chip", "aria-label": a.remove }, a.label, h(Icon, { name: "close", size: 14 })));
+            })),
+            h(Link, { to: "#/collection", className: "text-link" }, "امسح الكل")),
+          body));
+    }
+    
+    function SetsCard() {
+      return h("div", { className: "sets-card" },
+        h("p", null, "جمّع طقمك بنفسك: اختار أي ٢ أو ٣ منتجات من الأقسام، واسألنا على واتساب عن سعر الطقم والعروض المتاحة."),
+        h(WhatsAppLink, { message: SETS_MESSAGE, className: "btn btn-secondary" }, "اسأل عن الأطقم على واتساب"));
+    }
+    
+    // ---------------- Product ----------------
+    function ProductPage(props) {
+      var route = props.route;
+      var p = productById(route.id);
+      var shop = useShop();
+      var initial = p && p.sized && route.size && sizeKeys(p).includes(route.size) && isSizeAvailable(p, route.size) ? route.size : (p ? defaultSize(p) : "std");
+      var _sz = useState(initial), size = _sz[0], setSize = _sz[1];
+      var _q = useState(1), qty = _q[0], setQty = _q[1];
+      var _a = useState(false), added = _a[0], setAdded = _a[1];
+      useEffect(function () { setSize(initial); setQty(1); setAdded(false); }, [route.id]);
+      useEffect(function () {
+        if (!added) return;
+        var t = setTimeout(function () { setAdded(false); }, 2600);
+        return function () { clearTimeout(t); };
+      }, [added]);
+    
+      if (!p) return h(NotFoundPage, { message: "المنتج ده مش موجود أو اتشال من المحل." });
+    
+      var section = sectionById(p.section);
+      var fam = p.family ? familyById(p.family) : null;
+      var canBuy = isSizeAvailable(p, size);
+      var r = priceRange(size, qty);
+      var related = productsIn(p.section).filter(function (x) { return x.id !== p.id; }).slice(0, 4);
+      var chooseSize = function (k) {
+        setSize(k);
+        setAdded(false);
+        navigate(productHash(p.id) + "?size=" + k, { replace: true });
+      };
+      var addToBasket = function () {
+        shop.add(p, size, qty);
+        setAdded(true);
+      };
+      var directOrder = orderMessage(basketEntries((function () { var b = {}; b[p.id + ":" + size] = qty; return b; })()));
+    
+      return h("main", { id: "main", className: "pdp" },
+        h("div", { className: "wrap" },
+          h(Breadcrumbs, { items: [{ to: "#/", label: "الرئيسية" }, { to: collectionHash(p.section), label: section.title }, { label: p.name }] }),
+          h("div", { className: "pdp-grid" },
+            h("div", { className: "pdp-media" }, h("div", { className: "pdp-frame" }, h(ProductImage, { product: p, size: "large", priority: true, alt: photoAlt(p) }))),
+            h("div", { className: "pdp-info" },
+              h("p", { className: "card-kicker" }, section.title, fam ? " · " + fam.title : ""),
+              h(PageHeading, { className: "pdp-title" }, p.name),
+              p.sized && h("p", { className: "pdp-type" }, "أو دو بارفان"),
+              p.character && h("p", { className: "pdp-character" }, p.character),
+              h("p", { className: "pdp-desc" }, p.desc),
+    
+              h("div", { className: "buy-box" },
+                h("p", { className: "pdp-price", "aria-live": "polite" },
+                  h("span", { className: "pdp-price-value" }, canBuy ? priceLabel(size) : "غير متاح حاليًا"),
+                  p.sized && canBuy && h("span", { className: "pdp-price-size" }, "لحجم " + sizeInfo(size).label)),
+                p.sized && h(SizePicker, { product: p, value: size, onChange: chooseSize }),
+                canBuy
+                  ? h(Fragment, null,
+                    h("div", { className: "buy-row" },
+                      h("div", { className: "buy-qty" },
+                        h("span", { className: "buy-qty-label", "aria-hidden": "true" }, "الكمية"),
+                        h(QtyStepper, { value: qty, min: 1, label: "الكمية", onChange: setQty })),
+                      h("button", { type: "button", className: "btn btn-primary btn-large buy-add", onClick: addToBasket },
+                        added ? h(Fragment, null, h(Icon, { name: "check", size: 20 }), "اتضاف للسلة") : h(Fragment, null, "أضف للسلة", h("span", { className: "buy-add-price" }, money(r.lo, r.hi))))),
+                    added && h("button", { type: "button", className: "text-link buy-review", onClick: shop.openBasket }, "راجع السلة وابعت الطلب"),
+                    h(WhatsAppLink, { message: directOrder, className: "btn btn-secondary btn-block" }, "اطلب ده بس على واتساب"))
+                  : h("div", { className: "unavailable-note", role: "note" },
+                    h("p", null, p.sized && p.available !== false ? "الحجم ده مش متاح حاليًا. اختار حجم تاني، أو اسأل عن ميعاد توفره." : "المنتج ده مش متاح حاليًا. اسأل عن ميعاد توفره."),
+                    h(WhatsAppLink, { message: availabilityQuestion(p, size) }, "اسأل عن التوفر"))),
+    
+              h("ul", { className: "assurance", role: "list" },
+                h("li", null, h(Icon, { name: "chat" }), h("span", null, h("b", null, "الطلب على واتساب. "), "الطلب بيتبعت رسالة جاهزة لواتساب المحل، ومفيش دفع على الموقع.")),
+                h("li", null, h(Icon, { name: "truck" }), h("span", null, h("b", null, "التوصيل والدفع. "), "بعد ما تبعت الطلب، المحل بيرد عليك بتفاصيل التوصيل والدفع.")),
+                h("li", null, h(Icon, { name: "swap" }), h("span", null, h("b", null, "الاستبدال والاسترجاع. "), "عندك سؤال عنهم؟ اسأل في نفس الرسالة قبل ما تأكد طلبك."))))),
+    
+          h("section", { className: "pdp-notes", "aria-labelledby": "notes-title" },
+            h("h2", { id: "notes-title" }, p.sized ? "الريحة" : "عن المنتج"),
+            hasNotes(p)
+              ? h("dl", { className: "notes" },
+                [["top", "النوتات العليا", "أول ما ترشّ"], ["heart", "قلب العطر", "بعد دقايق"], ["base", "القاعدة", "اللي بيفضل معاك"]].map(function (row) {
+                  var list = (p.notes[row[0]] || []);
+                  if (!list.length) return null;
+                  return h("div", { key: row[0], className: "notes-row" },
+                    h("dt", null, row[1], h("span", null, row[2])),
+                    h("dd", null, list.join("، ")));
+                }))
+              : h("div", { className: "notes-ask" },
+                h("p", null, p.sized ? "عايز تعرف ريحة " + p.name + " عاملة إزاي قبل ما تطلب؟ اسألنا وهنوصفهالك." : "عندك سؤال عن " + p.name + "؟ اسألنا وهنرد عليك."),
+                h(WhatsAppLink, { message: p.sized ? scentQuestion(p) : GENERAL_MESSAGE + ": " + p.name }, p.sized ? "اسأل عن الريحة" : "اسأل على واتساب"))),
+    
+          related.length > 0 && h("section", { className: "section", "aria-labelledby": "related-title" },
+            h("div", { className: "section-head" },
+              h("h2", { id: "related-title" }, "من نفس القسم"),
+              h(Link, { to: collectionHash(p.section), className: "text-link" }, "كل " + section.title)),
+            h(ProductGrid, { items: related, columns: 4 }))));
+    }
+    
+    // ---------------- Not found ----------------
+    function NotFoundPage(props) {
+      return h("main", { id: "main", className: "wrap page-msg" },
+        h(PageHeading, null, "الصفحة دي مش موجودة"),
+        h("p", null, props.message || "يمكن الرابط اتغيّر. تقدر تكمّل من هنا:"),
+        h("div", { className: "btn-row" },
+          h(Link, { to: "#/collection", className: "btn btn-primary" }, "كل المنتجات"),
+          h(Link, { to: "#/", className: "btn btn-secondary" }, "الرئيسية")));
+    }
     
     // ===== src/app.js =====
     // App shell: basket state, dialogs, route changes (title, scroll, focus), mount.

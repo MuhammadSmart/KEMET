@@ -65,7 +65,7 @@ export function renderToString(node, svg = false) {
 
 // Load the app sources with a stub React that builds plain element objects.
 async function loadApp(root) {
-  const read = (p) => readFile(path.join(root, p), "utf8");
+  const read = async (p) => (await readFile(path.join(root, p), "utf8")).replace(/\r\n/g, "\n"); // CRLF-safe
   const createElement = (type, props, ...children) => ({
     type, props: Object.assign({}, props, { children: children.length <= 1 ? children[0] : children }),
   });
@@ -159,7 +159,7 @@ const between = (html, name, content) => {
 
 // Returns index.html with the generated shell between its build markers.
 export async function buildIndexHtml(root) {
-  const read = (p) => readFile(path.join(root, p), "utf8");
+  const read = async (p) => (await readFile(path.join(root, p), "utf8")).replace(/\r\n/g, "\n"); // CRLF-safe
   const shell = await buildShell(root);
   const [headJs, bodyJs] = (await read("src/shell.js")).replace(/\r\n/g, "\n").split("\n//#body\n");
   if (!bodyJs) throw new Error('src/shell.js must contain a "//#body" line');
