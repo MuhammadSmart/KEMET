@@ -4,13 +4,21 @@
    Alabaster = reading & shopping surfaces, cobalt = focal areas, gold = restrained accents.
    Contrast (WCAG 2.2): ink on alabaster 14.7:1, ink-2 7.1:1, gold-ink 5.6:1,
    alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1. */
-/* Reem Kufi (Khaled Hosny, SIL OFL 1.1 — fonts/ReemKufi-OFL.txt): geometric Fatimid Kufic
-   used for display text only. Body, prices and controls stay on the system Arabic font. */
+/* Display fonts, SIL OFL 1.1 (licenses in fonts/). Headings only: body, prices and
+   controls stay on the system Arabic font for legibility.
+   - El Messiri (Mohamed Gaber): tall, slender Arabic headings.
+   - Marcellus (Astigmatic): flared capitals with a carved-inscription feel, for "KEMET".
+   The .woff files are the same TTFs with compressed tables (scripts/ttf-to-woff.mjs). */
 @font-face {
-  font-family: "Reem Kufi";
-  /* WOFF = the same TTF with compressed tables (scripts/ttf-to-woff.mjs), half the size. */
-  src: url("fonts/ReemKufi-wght.woff") format("woff"), url("fonts/ReemKufi-wght.ttf") format("truetype");
+  font-family: "El Messiri";
+  src: url("fonts/ElMessiri-wght.woff") format("woff"), url("fonts/ElMessiri-wght.ttf") format("truetype");
   font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Marcellus";
+  src: url("fonts/Marcellus-Regular.woff") format("woff"), url("fonts/Marcellus-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-display: swap;
 }
 :root {
@@ -33,8 +41,8 @@
   --danger: #8f2d1f;
 
   --font-ar: "Segoe UI", "SF Arabic", "Geeza Pro", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, system-ui, sans-serif;
-  --font-display: "Reem Kufi", var(--font-ar);
-  --font-latin-display: Georgia, "Times New Roman", serif;
+  --font-display: "El Messiri", var(--font-ar);
+  --font-latin-display: "Marcellus", Georgia, "Times New Roman", serif;
 
   --step--1: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
   --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
@@ -88,8 +96,6 @@ img { height: auto; }
 h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
 h1, h2, h3 { line-height: 1.35; font-weight: 600; text-wrap: balance; font-family: var(--font-display); }
 .brand-ar, .card-title, .entry-tile-title, .size-ml { font-family: var(--font-display); }
-/* Reem Kufi has a very narrow space glyph; widen word gaps so Arabic words never run together. */
-h1, h2, h3, .brand-ar, .card-title, .entry-tile-title, .size-ml { word-spacing: 0.22em; }
 h2 { font-size: var(--step-2); }
 h3 { font-size: var(--step-1); }
 ul[role="list"], ol[role="list"] { list-style: none; padding: 0; }
@@ -149,10 +155,24 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .brand svg { flex: none; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.1; }
 .brand-latin {
-  font-family: var(--font-latin-display); letter-spacing: 0.22em; font-weight: 700;
+  font-family: var(--font-latin-display); letter-spacing: 0.22em; font-weight: 400;
   color: var(--gold-ink); font-size: 1.05rem;
 }
 .brand-ar { font-size: 0.8rem; color: var(--ink-2); }
+
+/* Cartouche: the oval ring Egyptian scribes drew around royal names, closed by a
+   bar at the end of the reading direction (on the left, in right-to-left text). */
+.cartouche { display: inline-flex; align-items: center; color: var(--gold); }
+.cartouche-ring {
+  align-items: center; text-align: center;
+  border: 1.5px solid currentColor; border-radius: 999px; padding: 3px 14px 4px;
+}
+.cartouche-ring .brand-latin { margin-inline-start: 0.22em; } /* balance the trailing letter-spacing */
+.cartouche::after {
+  content: ""; flex: none; align-self: stretch; width: 2px; margin-block: 0.45em;
+  margin-inline-start: -1px; background: currentColor; border-radius: 2px;
+}
+.cartouche-light { color: var(--gold-light); }
 .main-nav { display: none; }
 .main-nav ul { display: flex; gap: var(--space-1); list-style: none; padding: 0; margin: 0; }
 .main-nav a {
@@ -245,7 +265,9 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .site-footer { background: var(--cobalt-deep); color: var(--on-cobalt); padding-bottom: calc(var(--space-6) + var(--bar-h)); }
 .site-footer .divider { color: var(--gold-light); opacity: 0.7; }
 .footer-inner { display: grid; gap: var(--space-5); padding-block: var(--space-6); }
-.footer-brand .brand-latin { color: var(--gold-light); margin-top: var(--space-2); }
+.footer-brand { display: grid; gap: var(--space-2); justify-items: start; }
+.footer-brand .brand-latin { color: var(--gold-light); }
+.footer-brand .brand-ar { color: var(--on-cobalt); font-size: 0.95rem; }
 .footer-brand p:last-child { color: var(--on-cobalt-2); }
 .site-footer nav ul { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-1); }
 .site-footer nav a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: none; }
@@ -483,7 +505,19 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .story-inner { display: grid; gap: var(--space-4); padding-block: var(--space-7) var(--space-6); }
 .story-mark { color: var(--gold-light); }
 .story-copy { display: grid; gap: var(--space-3); max-width: 62ch; }
-.story-copy h2 { font-size: var(--step-3); }
+.story-copy h2 { font-size: var(--step-3); color: var(--gold-light); }
+/* Engraved gold: a gold gradient with a hairline shadow, like gold inlay on blue glass.
+   Its darkest stop keeps 4.5:1+ on cobalt-deep. Plain gold where clipping isn't supported. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .story-copy h2 {
+    background: linear-gradient(180deg, #f6e2a4 0%, #e3c67a 50%, #c9a04d 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 0 rgba(246, 226, 164, 0.18));
+  }
+}
+@media (forced-colors: active) {
+  .story-copy h2 { background: none; color: CanvasText; filter: none; }
+}
 .story-copy p { color: var(--on-cobalt-2); }
 .story-copy p:first-of-type + h2 + p { color: var(--on-cobalt); }
 .story .divider { padding-bottom: var(--space-5); }

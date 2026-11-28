@@ -2,13 +2,21 @@
    Alabaster = reading & shopping surfaces, cobalt = focal areas, gold = restrained accents.
    Contrast (WCAG 2.2): ink on alabaster 14.7:1, ink-2 7.1:1, gold-ink 5.6:1,
    alabaster on cobalt 9.1:1, gold-light on cobalt-deep 8.5:1. */
-/* Reem Kufi (Khaled Hosny, SIL OFL 1.1 — fonts/ReemKufi-OFL.txt): geometric Fatimid Kufic
-   used for display text only. Body, prices and controls stay on the system Arabic font. */
+/* Display fonts, SIL OFL 1.1 (licenses in fonts/). Headings only: body, prices and
+   controls stay on the system Arabic font for legibility.
+   - El Messiri (Mohamed Gaber): tall, slender Arabic headings.
+   - Marcellus (Astigmatic): flared capitals with a carved-inscription feel, for "KEMET".
+   The .woff files are the same TTFs with compressed tables (scripts/ttf-to-woff.mjs). */
 @font-face {
-  font-family: "Reem Kufi";
-  /* WOFF = the same TTF with compressed tables (scripts/ttf-to-woff.mjs), half the size. */
-  src: url("fonts/ReemKufi-wght.woff") format("woff"), url("fonts/ReemKufi-wght.ttf") format("truetype");
+  font-family: "El Messiri";
+  src: url("fonts/ElMessiri-wght.woff") format("woff"), url("fonts/ElMessiri-wght.ttf") format("truetype");
   font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Marcellus";
+  src: url("fonts/Marcellus-Regular.woff") format("woff"), url("fonts/Marcellus-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-display: swap;
 }
 :root {
@@ -31,8 +39,8 @@
   --danger: #8f2d1f;
 
   --font-ar: "Segoe UI", "SF Arabic", "Geeza Pro", "Noto Sans Arabic", "Noto Naskh Arabic", Tahoma, system-ui, sans-serif;
-  --font-display: "Reem Kufi", var(--font-ar);
-  --font-latin-display: Georgia, "Times New Roman", serif;
+  --font-display: "El Messiri", var(--font-ar);
+  --font-latin-display: "Marcellus", Georgia, "Times New Roman", serif;
 
   --step--1: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
   --step-0: clamp(1rem, 0.97rem + 0.15vw, 1.0625rem);
