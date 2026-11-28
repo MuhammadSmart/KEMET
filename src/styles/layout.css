@@ -163,8 +163,16 @@ main { display: block; padding-bottom: calc(var(--space-7) + var(--bar-h)); }
 .site-footer nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .footer-contact { display: grid; gap: var(--space-2); justify-items: start; }
 .footer-contact .fine { color: var(--on-cobalt-2); }
-.footer-address { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--on-cobalt-2); font-size: var(--step--1); }
-.footer-address .icon { flex: none; color: var(--gold-light); margin-top: 2px; }
+/* Call + map links (ContactLinks): icon in a ring, a small label, then the value. */
+.contact-links { list-style: none; padding: 0; margin: var(--space-2) 0 0; display: grid; gap: var(--space-2); }
+.contact-links a { display: flex; align-items: center; gap: var(--space-3); min-height: 44px; text-decoration: none; color: inherit; }
+.contact-links a > span:last-child { display: grid; line-height: 1.4; }
+.contact-links-icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 999px; }
+.contact-links-label { font-size: var(--step--1); font-weight: 700; }
+.contact-links a:hover .contact-links-label { text-decoration: underline; text-underline-offset: 3px; }
+.footer-links .contact-links-icon { border: 1px solid var(--gold-light); color: var(--gold-light); }
+.footer-links .contact-links-label { color: var(--gold-light); }
+.footer-links a > span:last-child > span:not(.contact-links-label) { color: var(--on-cobalt); font-size: var(--step--1); }
 .footer-note { color: var(--on-cobalt-2); font-size: var(--step--1); border-top: 1px solid rgba(201, 211, 238, 0.25); padding-top: var(--space-4); }
 .site-footer :focus-visible { outline-color: var(--gold-light); }
 @media (min-width: 720px) {

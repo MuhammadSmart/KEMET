@@ -64,6 +64,7 @@ node scripts/check.mjs     # build is fresh, catalog, prices, WhatsApp message f
 | What you want to change | File |
 |---|---|
 | Products, prices, sizes, WhatsApp number, homepage picks | `src/catalog.js` |
+| Shop address and its map link (`SHOP_ADDRESS`, `SHOP_MAPS_URL`), opening offer (`OFFER`: percent, end date, or 0 to turn off) | `src/catalog.js` |
 | Scent families, notes and "character" (add them only from the real product sheet) | `src/catalog.js` (optional fields are documented at the top) |
 | Colors, fonts, spacing, radii | `src/styles/tokens.css` (headings: El Messiri; the Latin "KEMET": Marcellus; both SIL OFL, licenses in `fonts/`. Each `.woff` is made from its `.ttf` with `node scripts/ttf-to-woff.mjs <in.ttf> <out.woff>`) |
 | Cartouche around the logo, engraved-gold story heading | `src/styles/layout.css` (`.cartouche`), `src/styles/pages.css` (`.story-copy h2`) |

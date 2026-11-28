@@ -14281,6 +14281,11 @@ Error generating stack: ` + i.message + `
     
     // The shop's address (footer and the homepage contact card).
     var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
+    // Where "افتح على الخريطة" goes. For now a Google Maps search for the address;
+    // for the exact spot, paste the shop's own pin link here (Google Maps: Share →
+    // Copy link).
+    var SHOP_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent("279د حدائق الأهرام البوابة الثانية الجديدة، الجيزة");
     
     // Opening offer. Announced on the homepage and in the basket, and added as a line
     // to every WhatsApp order; prices on the site stay as they are and the shop takes
@@ -14452,6 +14457,14 @@ Error generating stack: ` + i.message + `
     // Line added to WhatsApp orders while the offer runs, so the shop applies it.
     function offerNote() {
       return offerActive() ? "\n" + offerTitle() : "";
+    }
+    
+    // The shop's number for display ("+20 115 461 5084") and for tap-to-call.
+    function phoneDisplay() {
+      return "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8);
+    }
+    function telLink() {
+      return "tel:+" + WA_NUMBER;
     }
     
     function waLink(text) {
@@ -15000,6 +15013,7 @@ Error generating stack: ` + i.message + `
         truck: "M3 7h11v9H3zM14 10h4l3 3v3h-7M7 19a1.6 1.6 0 1 0 0-3.2A1.6 1.6 0 0 0 7 19zM17 19a1.6 1.6 0 1 0 0-3.2 1.6 1.6 0 0 0 0 3.2z",
         info: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18zM12 11v5M12 8h.01",
         swap: "M7 7h11l-3-3M17 17H6l3 3",
+        phone: "M8.5 2.5h7a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 20V4a1.5 1.5 0 0 1 1.5-1.5zM11 18.5h2",
         pin: "M12 21s-6.5-5.8-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.2 12 21 12 21zM12 12.6a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z",
         gift: "M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-1.5-3-5-3.5-5.5-1.5S9.5 7 12 7zM12 7c1.5-3 5-3.5 5.5-1.5S14.5 7 12 7z"
       };
@@ -15336,6 +15350,19 @@ Error generating stack: ` + i.message + `
           h("span", { className: "basket-bar-cta" }, "راجع واطلب")));
     }
     
+    // Tap-to-call and the address on Google Maps, each with its icon. Used in the
+    // footer and the homepage contact card.
+    function ContactLinks(props) {
+      return h("ul", { className: "contact-links " + (props.className || ""), role: "list" },
+        h("li", null, h("a", { href: telLink(), onClick: function () { trackEvent("contact-click", { type: "call" }); } },
+          h("span", { className: "contact-links-icon", "aria-hidden": "true" }, h(Icon, { name: "phone", size: 18 })),
+          h("span", null, h("span", { className: "contact-links-label" }, "اتصل بينا"), h("span", { dir: "ltr" }, phoneDisplay())))),
+        h("li", null, h("a", { href: SHOP_MAPS_URL, target: "_blank", rel: "noopener noreferrer", onClick: function () { trackEvent("contact-click", { type: "maps" }); } },
+          h("span", { className: "contact-links-icon", "aria-hidden": "true" }, h(Icon, { name: "pin", size: 18 })),
+          h("span", null, h("span", { className: "contact-links-label" }, "افتح على الخريطة"), h("span", null, SHOP_ADDRESS),
+            h("span", { className: "sr-only" }, " (بيفتح Google Maps)")))));
+    }
+    
     function Footer() {
       return h("footer", { className: "site-footer" },
         h(Divider, { tone: "light" }),
@@ -15356,8 +15383,7 @@ Error generating stack: ` + i.message + `
           h("div", { className: "footer-contact" },
             h("p", null, "للطلب والاستفسار"),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
-            h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)),
-            h("p", { className: "footer-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, SHOP_ADDRESS)))),
+            h(ContactLinks, { className: "footer-links" }))),
         h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
     }
     
@@ -15515,7 +15541,7 @@ Error generating stack: ` + i.message + `
             h("div", null,
               h("h3", null, "محتار تختار إيه؟"),
               h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك."),
-              h("p", { className: "contact-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, "المحل: " + SHOP_ADDRESS))),
+              h(ContactLinks, { className: "contact-links-light" })),
             h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
     }
     

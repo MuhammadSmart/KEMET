@@ -327,6 +327,19 @@ function MobileBasketBar() {
       h("span", { className: "basket-bar-cta" }, "راجع واطلب")));
 }
 
+// Tap-to-call and the address on Google Maps, each with its icon. Used in the
+// footer and the homepage contact card.
+function ContactLinks(props) {
+  return h("ul", { className: "contact-links " + (props.className || ""), role: "list" },
+    h("li", null, h("a", { href: telLink(), onClick: function () { trackEvent("contact-click", { type: "call" }); } },
+      h("span", { className: "contact-links-icon", "aria-hidden": "true" }, h(Icon, { name: "phone", size: 18 })),
+      h("span", null, h("span", { className: "contact-links-label" }, "اتصل بينا"), h("span", { dir: "ltr" }, phoneDisplay())))),
+    h("li", null, h("a", { href: SHOP_MAPS_URL, target: "_blank", rel: "noopener noreferrer", onClick: function () { trackEvent("contact-click", { type: "maps" }); } },
+      h("span", { className: "contact-links-icon", "aria-hidden": "true" }, h(Icon, { name: "pin", size: 18 })),
+      h("span", null, h("span", { className: "contact-links-label" }, "افتح على الخريطة"), h("span", null, SHOP_ADDRESS),
+        h("span", { className: "sr-only" }, " (بيفتح Google Maps)")))));
+}
+
 function Footer() {
   return h("footer", { className: "site-footer" },
     h(Divider, { tone: "light" }),
@@ -347,8 +360,7 @@ function Footer() {
       h("div", { className: "footer-contact" },
         h("p", null, "للطلب والاستفسار"),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-on-dark" }, "واتساب المحل"),
-        h("p", { className: "fine", dir: "ltr" }, "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8)),
-        h("p", { className: "footer-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, SHOP_ADDRESS)))),
+        h(ContactLinks, { className: "footer-links" }))),
     h("p", { className: "wrap footer-note" }, "الأسعار بالجنيه المصري وبتتحدث هنا أول ما تتغير. الطلب والاستفسار على واتساب المحل."));
 }
 

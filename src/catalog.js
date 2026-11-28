@@ -14,6 +14,11 @@ var WA_NUMBER = "201154615084";
 
 // The shop's address (footer and the homepage contact card).
 var SHOP_ADDRESS = "٢٧٩د حدائق الأهرام، البوابة الثانية الجديدة";
+// Where "افتح على الخريطة" goes. For now a Google Maps search for the address;
+// for the exact spot, paste the shop's own pin link here (Google Maps: Share →
+// Copy link).
+var SHOP_MAPS_URL = "https://www.google.com/maps/search/?api=1&query=" +
+  encodeURIComponent("279د حدائق الأهرام البوابة الثانية الجديدة، الجيزة");
 
 // Opening offer. Announced on the homepage and in the basket, and added as a line
 // to every WhatsApp order; prices on the site stay as they are and the shop takes

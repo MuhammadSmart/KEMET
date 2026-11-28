@@ -37,6 +37,14 @@ function offerNote() {
   return offerActive() ? "\n" + offerTitle() : "";
 }
 
+// The shop's number for display ("+20 115 461 5084") and for tap-to-call.
+function phoneDisplay() {
+  return "+" + WA_NUMBER.slice(0, 2) + " " + WA_NUMBER.slice(2, 5) + " " + WA_NUMBER.slice(5, 8) + " " + WA_NUMBER.slice(8);
+}
+function telLink() {
+  return "tel:+" + WA_NUMBER;
+}
+
 function waLink(text) {
   return "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(text);
 }

@@ -129,7 +129,7 @@ function HomePage() {
         h("div", null,
           h("h3", null, "محتار تختار إيه؟"),
           h("p", null, "اسألنا عن أي عطر أو عن الأطقم والتوصيل، وهنرد عليك."),
-          h("p", { className: "contact-address" }, h(Icon, { name: "pin", size: 18 }), h("span", null, "المحل: " + SHOP_ADDRESS))),
+          h(ContactLinks, { className: "contact-links-light" })),
         h(WhatsAppLink, { message: GENERAL_MESSAGE, className: "btn btn-secondary" }, "كلّمنا على واتساب"))));
 }
 
